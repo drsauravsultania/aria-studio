@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#056535">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aria Carousels">
 <title>Aria Carousel Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,189 +13,180 @@
 <style>
 :root{
   --brand:#056535; --mid:#08A858; --lime:#88C848; --alert:#F89818;
-  --paper:#F6F3EC; --ink:#10201A; --mut:#5C6A60; --line:#DCD6C9; --dark:#0E1C16;
+  --paper:#F6F3EC; --card:#fff; --ink:#10201A; --mut:#5C6A60;
+  --line:#E2DCCF; --ok:#0E7A45;
+  --pad:16px; --safe:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);
-  font:16px/1.55 'Mukta',-apple-system,BlinkMacSystemFont,sans-serif}
-.wrap{max-width:760px;margin:0 auto;padding:20px 16px 64px}
-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-.mark{width:38px;height:38px;border-radius:9px;background:var(--brand);
-  display:grid;place-items:center;color:var(--paper);font-weight:800;font-size:20px}
-h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.2px}
-.sub{color:var(--mut);font-size:14px;margin:0 0 18px 50px}
-.step{background:#fff;border:1px solid var(--line);border-radius:14px;
-  padding:16px 16px 18px;margin-bottom:14px}
-.step h2{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
-  color:var(--brand);margin:0 0 10px;font-weight:700}
-.hidden{display:none}
-input{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;
-  font:16px 'Mukta',sans-serif;background:var(--paper);color:var(--ink)}
-.prose{font-size:15px;line-height:1.6}
-.prose h3{font-size:15px;margin:14px 0 4px;color:var(--brand)}
-.prose a{color:var(--brand);word-break:break-word}
-.prose ul{padding-left:20px;margin:6px 0}
-.hookbtn{display:block;width:100%;text-align:left;background:var(--paper);
-  color:var(--ink);border:1.5px solid var(--line);border-radius:11px;
-  padding:14px 15px;margin-bottom:9px;font:600 16.5px 'Mukta',sans-serif;cursor:pointer}
-.hookbtn.on{border-color:var(--brand);background:#EEF6F1}
-.hookbtn small{display:block;font-weight:500;color:var(--mut);margin-top:3px;font-size:13.5px}
-.busy{display:none;align-items:center;gap:11px;justify-content:center;
-  padding:18px;color:var(--mut);font-size:15px}
-.spin{width:17px;height:17px;border:2.5px solid var(--line);border-top-color:var(--brand);
-  border-radius:50%;animation:sp .8s linear infinite;flex:none}
-@keyframes sp{to{transform:rotate(360deg)}}
-textarea{width:100%;min-height:160px;border:1px solid var(--line);border-radius:10px;
-  padding:12px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
-  background:var(--paper);color:var(--ink);resize:vertical}
-button{font:600 16px 'Mukta',sans-serif;border:0;border-radius:10px;padding:13px 20px;
-  background:var(--brand);color:#fff;cursor:pointer;width:100%}
-button.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
-button[disabled]{opacity:.4;cursor:not-allowed}
-.err{background:#FDF2E7;border:1px solid #F0C79A;color:#8A4708;border-radius:10px;
-  padding:12px 14px;margin-top:12px;font-size:14.5px;display:none}
-.gate{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;padding:14px 16px;margin-bottom:14px}
-.gate label{display:flex;gap:11px;align-items:flex-start;font-size:15px;cursor:pointer}
-.gate input{margin-top:4px;width:19px;height:19px;accent-color:var(--brand);flex:none}
-.slides{display:none}
-.slide-card{background:#fff;border:1px solid var(--line);border-radius:14px;
-  padding:12px;margin-bottom:14px}
-.slide-card img{width:100%;display:block;border-radius:8px}
-#out.locked .slide-card img{pointer-events:none;-webkit-user-select:none;user-select:none;
-  -webkit-touch-callout:none}
-#out.locked .cap .save{visibility:hidden}
-.waiting{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;
-  padding:13px 15px;font-size:14.5px;margin-bottom:14px;color:#7A4A10}
-.cap{font-size:13px;color:var(--mut);margin:9px 2px 0;display:flex;
-  justify-content:space-between;gap:10px}
-.hint{background:#EEF6F1;border:1px solid #C9E3D5;border-radius:12px;
-  padding:13px 15px;font-size:14.5px;margin-bottom:14px;color:#1C4633}
-.hint b{color:var(--brand)}
-pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var(--paper);
-  border:1px solid var(--line);border-radius:10px;padding:14px;margin:0}
-.row{display:flex;gap:10px}.row>*{flex:1}
-.go{display:block;text-decoration:none;background:var(--brand);color:#fff;
-  border-radius:14px;padding:15px 18px;margin-bottom:14px;font-weight:700;font-size:17px}
-.go span{display:block;font-weight:400;font-size:14px;opacity:.82;margin-top:3px}
-.srcbox{background:#fff;border:1px solid var(--line);border-radius:14px;
-  padding:16px 16px 4px;margin-bottom:14px}
-.srcbox h2{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
-  color:var(--brand);margin:0 0 4px;font-weight:700}
-.srcbox p.lead{font-size:14px;color:var(--mut);margin:0 0 12px}
-.srcbox ol{margin:0;padding-left:20px}
-.srcbox li{margin-bottom:13px;font-size:14.5px;line-height:1.5}
-.srcbox a{color:var(--brand);word-break:break-word}
-.srcbox .acc{color:var(--mut);font-size:13px}
-.diverge{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;
-  padding:13px 15px;margin:4px 0 14px;font-size:14.5px;color:#7A4A10}
+  font:17px/1.55 'Mukta',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  padding-bottom:calc(96px + var(--safe))}
+.wrap{max-width:620px;margin:0 auto;padding:18px var(--pad) 24px}
+
+/* header */
+.top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+.mark{width:40px;height:40px;border-radius:11px;background:var(--brand);flex:none;
+  display:grid;place-items:center;color:var(--paper);font-weight:800;font-size:21px}
+h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.3px;line-height:1.15}
+.sub{color:var(--mut);font-size:15px;margin:2px 0 20px 51px}
+
+/* steps */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px;margin-bottom:14px}
+.eyebrow{font-size:11.5px;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--brand);font-weight:700;margin:0 0 10px;display:flex;
+  align-items:center;gap:8px}
+.eyebrow i{width:20px;height:20px;border-radius:50%;background:var(--brand);
+  color:#fff;font-style:normal;font-size:12px;display:grid;place-items:center;
+  font-weight:700;flex:none}
+.eyebrow.done i{background:var(--ok)}
+.card h3{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:-.2px}
+.card p{margin:0 0 14px;color:var(--mut);font-size:15px}
+
+/* buttons */
+button,.btn{font:700 17px 'Mukta',sans-serif;border:0;border-radius:13px;
+  padding:15px 18px;background:var(--brand);color:#fff;cursor:pointer;
+  width:100%;display:block;text-align:center;text-decoration:none;
+  transition:transform .06s ease}
+button:active,.btn:active{transform:scale(.985)}
+.btn small{display:block;font-weight:400;font-size:14px;opacity:.85;margin-top:2px}
+button.ghost{background:transparent;color:var(--brand);
+  box-shadow:inset 0 0 0 1.5px var(--brand)}
+button.quiet{background:transparent;color:var(--mut);font-weight:500;font-size:15px;
+  padding:11px}
+button[disabled]{opacity:.35;pointer-events:none}
+.gap{height:9px}
+
+textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:11px;
+  padding:12px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--paper);color:var(--mut);resize:vertical;margin-bottom:10px}
+.hidden{display:none!important}
+
+.msg{border-radius:12px;padding:13px 15px;font-size:15px;margin-top:12px}
+.msg.bad{background:#FDF2E7;border:1px solid #F0C79A;color:#8A4708}
+.msg.good{background:#EAF5EE;border:1px solid #BEDFCB;color:#12563A}
+
+/* sources */
+.src h4{font-size:11.5px;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--brand);margin:0 0 3px;font-weight:700}
+.src ol{margin:10px 0 0;padding-left:19px}
+.src li{margin-bottom:12px;font-size:15px;line-height:1.45}
+.src a{color:var(--brand);word-break:break-word}
+.src .acc{color:var(--mut);font-size:13px}
+.diverge{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:14px;
+  padding:15px 16px;margin-bottom:14px;font-size:15px;color:#7A4A10}
 .diverge b{display:block;margin-bottom:5px}
-.tiny{font-size:13px;color:var(--mut);margin:10px 2px 0}
+
+/* gate */
+.gate{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:16px;
+  padding:16px;margin-bottom:14px}
+.gate.on{background:#EAF5EE;border-color:#BEDFCB}
+.gate label{display:flex;gap:13px;align-items:flex-start;cursor:pointer;font-size:16px}
+.gate input{width:23px;height:23px;margin:2px 0 0;accent-color:var(--brand);flex:none}
+
+/* slides */
+.slide{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:11px;margin-bottom:13px}
+.slide img{width:100%;display:block;border-radius:10px}
+.slide .bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.slide .n{font-size:14px;color:var(--mut);font-weight:600;flex:none;min-width:58px}
+.slide button{padding:11px 14px;font-size:15.5px}
+.slide.saved{border-color:#BEDFCB;background:#F7FCF9}
+.slide.saved button{background:var(--ok)}
+.locked .slide button{opacity:.3;pointer-events:none}
+
+/* sticky bar */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;
+  padding:10px var(--pad) calc(10px + var(--safe));
+  background:rgba(246,243,236,.94);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);display:none}
+.dock.on{display:block}
+.dock .inner{max-width:620px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.dock .count{font-size:15px;font-weight:600;flex:none}
+.dock .count b{color:var(--brand)}
+.dock button{flex:1;padding:13px}
+
+pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(--paper);
+  border:1px solid var(--line);border-radius:11px;padding:14px;margin:0 0 10px;
+  max-height:230px;overflow:auto}
 </style>
 </head>
 <body>
+
 <div class="wrap">
 
-<header>
-  <div class="mark" id="mark">A</div>
-  <h1>Aria Carousel Studio</h1>
-</header>
-<p class="sub">Type a topic. Check what comes back. Save the slides.</p>
+  <div class="top">
+    <div class="mark">A</div>
+    <h1>Aria Carousel Studio</h1>
+  </div>
+  <p class="sub">Type a topic. Check what comes back. Save the slides.</p>
 
-<a class="go" href="https://claude.ai/project/01a04506-58dc-75e4-b54d-8bab53c585b7"
-   target="_blank" rel="noopener">
-  Get a carousel from Claude
-  <span>Ask for a topic, then copy what it sends back</span>
-</a>
-
-<!-- passphrase ------------------------------------------------------- -->
-<div class="step" id="lock">
-  <h2>First time on this device</h2>
-  <input id="pass" type="password" placeholder="Passphrase" autocomplete="current-password">
-  <div style="height:10px"></div>
-  <button id="unlock">Continue</button>
-  <p class="tiny">Saurav sent you this. You will only be asked once on this phone.</p>
-</div>
-
-<!-- topic ------------------------------------------------------------ -->
-<div class="step hidden" id="s1">
-  <h2>1 · What is the carousel about?</h2>
-  <input id="topic" placeholder="e.g. fever in a baby under 3 months">
-  <div style="height:10px"></div>
-  <button id="go">Look up the guidelines</button>
-  <p class="tiny">It reads IAP, NNF, MoHFW, ICMR and WHO before writing anything.</p>
-</div>
-
-<!-- sources ---------------------------------------------------------- -->
-<div class="step hidden" id="s2">
-  <h2>2 · What the guidelines say</h2>
-  <div id="findings" class="prose"></div>
-</div>
-
-<!-- hooks ------------------------------------------------------------ -->
-<div class="step hidden" id="s3">
-  <h2>3 · Choose the opening line</h2>
-  <div id="hooks"></div>
-  <input id="ownhook" placeholder="Or write your own opening line">
-  <div style="height:10px"></div>
-  <button id="makeit">Make the carousel</button>
-</div>
-
-<!-- slides ----------------------------------------------------------- -->
-<div id="stage" class="hidden">
-  <div class="step">
-    <h2>4 · Anything to change?</h2>
-    <input id="fix" placeholder="e.g. slide 4 should say 15, not 12">
-    <div style="height:10px"></div>
-    <button class="ghost" id="revise">Change it</button>
-    <p class="tiny">Say it however you would say it out loud. Redo this as often as you like.</p>
+  <!-- 1 -->
+  <div class="card" id="c1">
+    <p class="eyebrow"><i>1</i> Write it</p>
+    <h3>Ask Claude for a carousel</h3>
+    <p>Give it a topic. It checks the Indian guidelines first, then sends the
+       carousel back. Tap the copy button on what it sends.</p>
+    <a class="btn" href="https://claude.ai/project/01a04506-58dc-75e4-b54d-8bab53c585b7"
+       target="_blank" rel="noopener">Open Claude
+       <small>Aria Carousels project</small></a>
   </div>
 
-  <div class="gate">
+  <!-- 2 -->
+  <div class="card" id="c2">
+    <p class="eyebrow"><i>2</i> Bring it here</p>
+    <h3>Paste what Claude sent</h3>
+    <p id="p2">One tap. Your phone may ask permission to read the clipboard — say yes.</p>
+    <button id="paste">Paste from clipboard</button>
+    <div class="gap"></div>
+    <button class="quiet" id="manual">or paste by hand</button>
+    <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
+    <button id="load" class="ghost hidden">Show me the slides</button>
+    <div class="msg bad hidden" id="err"></div>
+  </div>
+
+</div>
+
+<div class="wrap hidden" id="stage">
+
+  <div class="card src" id="srcbox">
+    <h4>Where this came from</h4>
+    <p style="margin:0;font-size:14.5px">Every figure on the slides should match
+       one of these. Tap to open.</p>
+    <ol id="srclist"></ol>
+  </div>
+
+  <div class="diverge hidden" id="diverge"></div>
+
+  <div class="gate" id="gatebox">
     <label>
       <input type="checkbox" id="gate">
-      <span><b>I have read every slide and checked each figure against its source.</b>
-      Nothing is published until I save and post it.</span>
+      <span><b>I have read every slide and checked each figure against its source.</b><br>
+      Saving unlocks once this is ticked. Nothing is published until you post it.</span>
     </label>
   </div>
 
-  <div class="waiting" id="waiting">
-    Read all seven slides first. Tick the box above when you have checked every
-    figure, and saving will unlock.
-  </div>
+  <div id="out" class="locked"></div>
 
-  <div class="hint" id="hint">
-    <b>To save a slide:</b> press and hold it, then choose <b>Download image</b>.
-    Save all seven in order, then post them together as one Instagram carousel.
-  </div>
-
-  <div class="srcbox" id="srcbox" style="display:none">
-    <h2>Where this came from</h2>
-    <p class="lead">Every figure on the slides should match one of these. Tap to open.</p>
-    <ol id="srclist"></ol>
-  </div>
-  <div class="diverge" id="diverge" style="display:none"></div>
-
-  <div id="out"></div>
-
-  <div class="step">
-    <h2>Caption</h2>
-    <pre class="caption" id="capbox"></pre>
-    <div style="height:10px"></div>
+  <div class="card">
+    <p class="eyebrow"><i>4</i> Post it</p>
+    <h3>Caption</h3>
+    <pre class="cap" id="capbox"></pre>
     <button class="ghost" id="copycap">Copy caption</button>
   </div>
 
-  <div class="step">
-    <h2>Sources</h2>
-    <div id="srcs" class="prose"></div>
+</div>
+
+<div class="dock" id="dock">
+  <div class="inner">
+    <span class="count" id="count"><b>0</b> of 7 saved</span>
+    <button id="dockcap" class="ghost">Copy caption</button>
   </div>
 </div>
 
-<div class="err" id="err"></div>
-<div class="busy" id="busy"><span class="spin"></span><span id="busytxt">Working…</span></div>
-
-</div>
-
 <script>
+
 const $ = s => document.querySelector(s);
 const escapeHtml = t => String(t).replace(/[&<>"']/g,
   c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -543,109 +537,144 @@ function renderSlide(slide, i, n){
   return c;
 }
 
+
 /* ---- app ------------------------------------------------------------ */
 const REQ = ['hook','scene','common_practice','correction','steps','red_flags','cta'];
+let DOC = null, saved = new Set();
+
+const show = (el,on) => el.classList.toggle('hidden', !on);
 
 function parse(raw){
-  let t = raw.trim();
+  const t = String(raw||'').trim();
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if(a === -1 || b === -1) throw new Error('That does not look like carousel data. Copy the whole block Claude gave you, from the first { to the last }.');
-  const doc = JSON.parse(t.slice(a, b+1));
-  if(!Array.isArray(doc.slides)) throw new Error('No slides found in that data.');
-  const got = doc.slides.map(s=>s.type).join(',');
-  if(got !== REQ.join(',')) throw new Error('The slides are not in the expected order. Ask Claude to send the carousel again.');
+  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Copy the whole block Claude sent, including the first { and the last }.');
+  let doc;
+  try { doc = JSON.parse(t.slice(a, b+1)); }
+  catch(_) { throw new Error('Some of the carousel is missing. Go back to Claude, tap copy on the whole block, and try again.'); }
+  if(!Array.isArray(doc.slides)) throw new Error('No slides in that. Copy the block Claude sent, not the message around it.');
+  if(doc.slides.map(s=>s.type).join(',') !== REQ.join(','))
+    throw new Error('The slides are out of order. Ask Claude to send the carousel again.');
   return doc;
 }
 
-$('#load').onclick = async () => {
-  const e = $('#err'); e.style.display='none';
+async function build(raw){
+  const err = $('#err'); show(err,false);
   let doc;
-  try { doc = parse($('#src').value); }
-  catch(ex){ e.textContent = ex.message; e.style.display='block'; return; }
+  try { doc = parse(raw); }
+  catch(ex){ err.textContent = ex.message; show(err,true); return; }
+  DOC = doc; saved.clear();
 
-  $('#load').disabled = true; $('#load').textContent = 'Drawing the slides…';
-  try { await document.fonts.load('800 100px Mukta'); await document.fonts.load('500 48px Mukta'); } catch(_){}
+  try{ await document.fonts.load('800 100px Mukta');
+       await document.fonts.load('500 48px Mukta'); }catch(_){}
   if(logo === null) logo = await tryLogo();
 
-  const out = $('#out'); out.innerHTML = '';
-  doc.slides.forEach((s,i)=>{
-    const card = document.createElement('div'); card.className='slide-card';
-    const img = new Image();
-    img.src = renderSlide(s, i, doc.slides.length).toDataURL('image/png');
-    img.alt = (doc.alt_text && doc.alt_text[i]) || ('Slide ' + (i+1));
-    card.appendChild(img);
-    const cap = document.createElement('div'); cap.className='cap';
-    cap.innerHTML = `<span>Slide ${i+1} of ${doc.slides.length}</span>`
-                  + `<span class="save">press and hold to save</span>`;
-    card.appendChild(cap);
-    out.appendChild(card);
-  });
-
-  // Sources sit above the slides, not buried in the caption. She is checking
-  // figures against them while she reads; making her scroll past seven slides
-  // to find the reference is how checking quietly stops happening.
   const sl = $('#srclist'); sl.innerHTML = '';
   if(doc.sources && doc.sources.length){
-    doc.sources.forEach(src => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a href="${src.url}" target="_blank" rel="noopener">`
-        + `${escapeHtml(src.name)}</a>`
-        + (src.accessed ? `<div class="acc">checked ${escapeHtml(src.accessed)}</div>` : '');
+    doc.sources.forEach(s=>{
+      const li=document.createElement('li');
+      li.innerHTML = `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`
+        + (s.accessed ? `<div class="acc">checked ${esc(s.accessed)}</div>` : '');
       sl.appendChild(li);
     });
-    $('#srcbox').style.display = 'block';
-  } else $('#srcbox').style.display = 'none';
+    show($('#srcbox'),true);
+  } else show($('#srcbox'),false);
 
   if(doc.guideline_conflict){
-    $('#diverge').innerHTML = '<b>Where guidance disagrees</b>'
-      + escapeHtml(doc.guideline_conflict);
-    $('#diverge').style.display = 'block';
-  } else $('#diverge').style.display = 'none';
+    $('#diverge').innerHTML = '<b>Where guidance disagrees</b>' + esc(doc.guideline_conflict);
+    show($('#diverge'),true);
+  } else show($('#diverge'),false);
 
-  $('#capbox').textContent = buildCaption(doc);
-  $('#alts').textContent = 'Alt text for each slide is in the caption block below the hashtags.';
-  $('#gate').checked = false;
-  $('#stage').style.display='block';
-  $('#load').disabled = false; $('#load').textContent = 'Show me the slides';
-  gateToggle();
-  $('#stage').scrollIntoView({behavior:'smooth'});
-};
+  const out = $('#out'); out.innerHTML='';
+  doc.slides.forEach((s,i)=>{
+    const url = renderSlide(s,i,doc.slides.length).toDataURL('image/png');
+    const d = document.createElement('div'); d.className='slide';
+    d.innerHTML = `<img src="${url}" alt="${esc((doc.alt_text&&doc.alt_text[i])||('Slide '+(i+1)))}">`
+      + `<div class="bar"><span class="n">${i+1} of ${doc.slides.length}</span>`
+      + `<button data-i="${i}">Save slide ${i+1}</button></div>`;
+    d.querySelector('button').onclick = () => saveSlide(i, url, d);
+    out.appendChild(d);
+  });
 
-function buildCaption(doc){
-  const L = [doc.caption || '', ''];
-  if(doc.sources && doc.sources.length){
-    L.push('Sources');
-    doc.sources.forEach(s => L.push('  · ' + s.name + ' — ' + s.url));
-    L.push('');
-  }
-  if(doc.hashtags) L.push(doc.hashtags.join(' '), '');
-  if(doc.alt_text){
-    L.push('ALT TEXT (paste per slide when uploading)');
-    doc.alt_text.forEach((a,i)=>L.push('  ' + (i+1) + '. ' + a));
-  }
+  $('#capbox').textContent = caption(doc);
+  $('#gate').checked = false; gate();
+  show($('#stage'),true);
+  $('#dock').classList.add('on');
+  $('#stage').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function saveSlide(i, url, card){
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${slug(DOC.topic)}-${String(i+1).padStart(2,'0')}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+  saved.add(i); card.classList.add('saved');
+  card.querySelector('button').textContent = `Saved ${i+1}`;
+  count();
+}
+
+function count(){
+  const n = saved.size, t = DOC ? DOC.slides.length : 7;
+  $('#count').innerHTML = `<b>${n}</b> of ${t} saved`;
+}
+
+function gate(){
+  const on = $('#gate').checked;
+  $('#out').classList.toggle('locked', !on);
+  $('#gatebox').classList.toggle('on', on);
+}
+$('#gate').onchange = gate;
+
+const slug = t => String(t||'carousel').toLowerCase()
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48) || 'carousel';
+const esc = t => String(t).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function caption(doc){
+  const L=[doc.caption||'',''];
+  if(doc.sources&&doc.sources.length){ L.push('Sources');
+    doc.sources.forEach(s=>L.push('  · '+s.name+' — '+s.url)); L.push(''); }
+  if(doc.hashtags) L.push(doc.hashtags.join(' '),'');
+  if(doc.alt_text){ L.push('ALT TEXT (paste per slide when uploading)');
+    doc.alt_text.forEach((a,i)=>L.push('  '+(i+1)+'. '+a)); }
   return L.join('\n');
 }
 
-function gateToggle(){
-  // The gate blocks saving, never reading.
-  //
-  // The first version dimmed the slides until the box was ticked, which asked
-  // her to confirm she had read something it was actively making hard to read.
-  // She has to be able to study every slide at full contrast first — that is the
-  // whole review. What the tick releases is the ability to take them away.
-  const on = $('#gate').checked;
-  $('#out').classList.toggle('locked', !on);
-  $('#hint').style.display = on ? 'block' : 'none';
-  $('#waiting').style.display = on ? 'none' : 'block';
-}
-$('#gate').onchange = gateToggle;
-
-$('#copycap').onclick = async () => {
-  try{ await navigator.clipboard.writeText($('#capbox').textContent);
-       $('#copycap').textContent = 'Caption copied'; }
-  catch(_){ $('#copycap').textContent = 'Select the caption above and copy it'; }
-  setTimeout(()=>$('#copycap').textContent='Copy caption', 2200);
+/* one-tap paste */
+$('#paste').onclick = async () => {
+  const b=$('#paste'), err=$('#err'); show(err,false);
+  b.textContent='Reading clipboard…'; b.disabled=true;
+  let text='';
+  try{ text = await navigator.clipboard.readText(); }
+  catch(_){
+    b.disabled=false; b.textContent='Paste from clipboard';
+    err.innerHTML = 'Your browser would not let me read the clipboard. '
+      + 'Tap <b>or paste by hand</b> below and press and hold in the box instead.';
+    show(err,true); show($('#src'),true); show($('#load'),true); $('#src').focus();
+    return;
+  }
+  b.textContent='Drawing the slides…';
+  await build(text);
+  b.disabled=false; b.textContent='Paste from clipboard';
 };
+
+$('#manual').onclick = () => {
+  show($('#src'),true); show($('#load'),true);
+  $('#manual').classList.add('hidden'); $('#src').focus();
+};
+$('#load').onclick = async () => {
+  $('#load').disabled=true; $('#load').textContent='Drawing the slides…';
+  await build($('#src').value);
+  $('#load').disabled=false; $('#load').textContent='Show me the slides';
+};
+
+async function copyCap(btn){
+  try{ await navigator.clipboard.writeText($('#capbox').textContent);
+       btn.textContent='Caption copied'; }
+  catch(_){ btn.textContent='Select the caption and copy it'; }
+  setTimeout(()=>btn.textContent='Copy caption',2200);
+}
+$('#copycap').onclick = e => copyCap(e.target);
+$('#dockcap').onclick = e => copyCap(e.target);
 </script>
 </body>
 </html>

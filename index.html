@@ -155,7 +155,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
        permission to read the clipboard — say yes.</p>
     <button id="paste">Paste the carousel</button>
     <div class="gap"></div>
-    <button class="quiet" id="manual">or paste by hand</button>
+    <button class="quiet" id="manual">or paste it in the box</button>
     <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
     <button id="load" class="ghost hidden">Show me the slides</button>
     <div class="msg bad hidden" id="err"></div>
@@ -694,7 +694,7 @@ $('#paste').onclick = async () => {
   catch(_){
     b.disabled=false; b.textContent='Paste the carousel';
     err.innerHTML = 'Your browser would not let me read the clipboard. '
-      + 'Tap <b>or paste by hand</b> below and press and hold in the box instead.';
+      + 'Tap <b>or paste it in the box</b> below, then press and hold in the box and choose Paste.';
     show(err,true); show($('#src'),true); show($('#load'),true); $('#src').focus();
     return;
   }

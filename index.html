@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Carousel Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#056535; --mid:#08A858; --lime:#88C848; --alert:#F89818;
+  --paper:#F6F3EC; --ink:#10201A; --mut:#5C6A60; --line:#DCD6C9; --dark:#0E1C16;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:16px/1.55 'Mukta',-apple-system,BlinkMacSystemFont,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 64px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.mark{width:38px;height:38px;border-radius:9px;background:var(--brand);
+  display:grid;place-items:center;color:var(--paper);font-weight:800;font-size:20px}
+h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.2px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 18px 50px}
+.step{background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:16px 16px 18px;margin-bottom:14px}
+.step h2{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--brand);margin:0 0 10px;font-weight:700}
+textarea{width:100%;min-height:160px;border:1px solid var(--line);border-radius:10px;
+  padding:12px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--paper);color:var(--ink);resize:vertical}
+button{font:600 16px 'Mukta',sans-serif;border:0;border-radius:10px;padding:13px 20px;
+  background:var(--brand);color:#fff;cursor:pointer;width:100%}
+button.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+button[disabled]{opacity:.4;cursor:not-allowed}
+.err{background:#FDF2E7;border:1px solid #F0C79A;color:#8A4708;border-radius:10px;
+  padding:12px 14px;margin-top:12px;font-size:14.5px;display:none}
+.gate{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.gate label{display:flex;gap:11px;align-items:flex-start;font-size:15px;cursor:pointer}
+.gate input{margin-top:4px;width:19px;height:19px;accent-color:var(--brand);flex:none}
+.slides{display:none}
+.slide-card{background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:12px;margin-bottom:14px}
+.slide-card img{width:100%;display:block;border-radius:8px}
+#out.locked .slide-card img{pointer-events:none;-webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none}
+#out.locked .cap .save{visibility:hidden}
+.waiting{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;
+  padding:13px 15px;font-size:14.5px;margin-bottom:14px;color:#7A4A10}
+.cap{font-size:13px;color:var(--mut);margin:9px 2px 0;display:flex;
+  justify-content:space-between;gap:10px}
+.hint{background:#EEF6F1;border:1px solid #C9E3D5;border-radius:12px;
+  padding:13px 15px;font-size:14.5px;margin-bottom:14px;color:#1C4633}
+.hint b{color:var(--brand)}
+pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var(--paper);
+  border:1px solid var(--line);border-radius:10px;padding:14px;margin:0}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.tiny{font-size:13px;color:var(--mut);margin:10px 2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark" id="mark">A</div>
+  <h1>Aria Carousel Studio</h1>
+</header>
+<p class="sub">Paste the carousel, check it, save the slides.</p>
+
+<div class="step">
+  <h2>1 · The carousel</h2>
+  <textarea id="src" placeholder="Paste the carousel data Claude gave you here."></textarea>
+  <div style="height:10px"></div>
+  <button id="load">Show me the slides</button>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="stage" class="slides">
+
+  <div class="gate">
+    <label>
+      <input type="checkbox" id="gate">
+      <span><b>I have read every slide and checked each figure against its source.</b>
+      Nothing is published until I save and post it.</span>
+    </label>
+  </div>
+
+  <div class="waiting" id="waiting">
+    Read all seven slides first. Tick the box above when you have checked
+    every figure, and saving will unlock.
+  </div>
+
+  <div class="hint" id="hint">
+    <b>To save a slide:</b> press and hold it, then choose <b>Add to Photos</b>
+    on iPhone or <b>Download image</b> on Android and desktop. Save all seven in
+    order, then post them together as one Instagram carousel.
+  </div>
+
+  <div id="out"></div>
+
+  <div class="step">
+    <h2>Caption</h2>
+    <pre class="caption" id="capbox"></pre>
+    <div style="height:10px"></div>
+    <button class="ghost" id="copycap">Copy caption</button>
+    <p class="tiny" id="alts"></p>
+  </div>
+</div>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
+           paper:'#F6F3EC', ink:'#10201A', mut:'#646C64', rule:'#D6D0C3',
+           dark:'#0E1C16', darkInk:'#F6F3EC', darkMut:'#A4B2A8', gradInk:'#CBE8D6'};
+const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
+
+const BRAND = {
+  name:'Aria Healthcare', tagline:'Founded on Faith',
+  credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
+  site:'ariahealthcare.in', wa:'WhatsApp +91 62052 54330',
+  reg:'Reg. No. 202/2035000530', mark:'A'
+};
+const LEGAL = 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
+
+const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
+  common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',
+  steps:'WHAT TO DO INSTEAD', red_flags:'SEEK CARE TODAY', cta:'IN SHORT'};
+const SURFACE = {hook:'light', scene:'dark', common_practice:'light',
+  correction:'grad', steps:'light', red_flags:'dark', cta:'grad'};
+
+let logo = null;
+const tryLogo = () => new Promise(res => {
+  const i = new Image(); i.crossOrigin = 'anonymous';
+  i.onload = () => res(i); i.onerror = () => res(null);
+  i.src = 'https://ariahealthcare.in/img/logo.png';
+});
+
+const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : P.gradInk;
+const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : '#A8CEBA';
+const rule = s => s==='light'?P.rule : s==='dark'?'#2E4439' : '#569476';
+const acc = (s,t) => t==='red_flags' ? P.alert
+                   : s==='light' ? P.brand : s==='dark' ? P.lime : '#fff';
+
+const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
+
+function wrap(ctx, text, font, maxW){
+  ctx.font = font;
+  const clean = t => t.replace(/[{}]/g,'');
+  const toks = text.match(/\{[^}]+\}\S*|\S+/g) || [];
+  const lines = []; let cur = [];
+  for(const t of toks){
+    const trial = cur.concat(t).join(' ');
+    if(ctx.measureText(clean(trial)).width <= maxW || !cur.length) cur.push(t);
+    else { lines.push(cur.join(' ')); cur = [t]; }
+  }
+  if(cur.length) lines.push(cur.join(' '));
+  return lines;
+}
+
+function drawLine(ctx, line, x, y, font, colour, accent){
+  ctx.font = font; ctx.textBaseline = 'top';
+  const parts = []; let last = 0;
+  const re = /\{([^}]+)\}/g; let m;
+  while((m = re.exec(line))){
+    if(m.index > last) parts.push([line.slice(last, m.index), false]);
+    parts.push([m[1], true]); last = m.index + m[0].length;
+  }
+  if(last < line.length) parts.push([line.slice(last), false]);
+  if(!parts.length) parts.push([line, false]);
+  for(const [txt, isAcc] of parts){
+    ctx.fillStyle = isAcc ? accent : colour;
+    ctx.fillText(txt, x, y);
+    x += ctx.measureText(txt).width;
+  }
+}
+
+function block(ctx, lines, x, y, font, lh, colour, accent){
+  for(const l of lines){ drawLine(ctx, l, x, y, font, colour, accent); y += lh; }
+  return y;
+}
+
+function bg(ctx, surface){
+  if(surface === 'grad'){
+    const g = ctx.createLinearGradient(0, 0, W*0.5, H);
+    g.addColorStop(0,'#08422A'); g.addColorStop(.55,P.brand); g.addColorStop(1,P.mid);
+    ctx.fillStyle = g;
+  } else ctx.fillStyle = surface==='light' ? P.paper : P.dark;
+  ctx.fillRect(0,0,W,H);
+}
+
+function header(ctx, surface, i, n){
+  const mp = 62, y = M - 6; let x = M;
+  if(logo){ ctx.drawImage(logo, x, y, mp, mp); x += mp + 22; }
+  else{
+    ctx.fillStyle = surface==='grad' ? '#fff' : acc(surface,'');
+    roundRect(ctx, x, y, mp, mp, 14); ctx.fill();
+    ctx.strokeStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
+    ctx.fillStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    ctx.font = F(29,800); ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillText(BRAND.mark, x+mp/2, y+mp/2+1);
+    ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
+  }
+  ctx.fillStyle = ink(surface); ctx.font = F(34,700);
+  ctx.fillText(BRAND.name, x, y+2);
+  ctx.fillStyle = mut(surface); ctx.font = F(25,500);
+  ctx.fillText(BRAND.credential, x, y+40);
+  ctx.font = F(27,600); ctx.textAlign='right';
+  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y+12);
+  ctx.textAlign='left';
+  const ry = y + mp + 30;
+  ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(M,ry); ctx.lineTo(W-M,ry); ctx.stroke();
+  return ry;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+function eyebrow(ctx, text, x, y, surface, type){
+  ctx.font = F(29,700); ctx.fillStyle = acc(surface,type); ctx.textBaseline='top';
+  if(/[\u0900-\u097F]/.test(text)) ctx.fillText(text, x, y);
+  else { let cx = x; for(const ch of text){ ctx.fillText(ch,cx,y); cx += ctx.measureText(ch).width + 2.6; } }
+  return y + 40;
+}
+
+function rail(ctx, surface, type, i, n){
+  const yTop = H - RAIL + 26, yBot = H - 52, prog = (i+1)/n;
+  const path = t => { const x = t*W; return [x, yBot - (yBot-yTop)*Math.pow(t,0.55)]; };
+  const draw = (a,b,col,wd) => {
+    ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.lineCap='round';
+    for(let k=0;k<=200;k++){ const [x,y]=path(a+(b-a)*k/200); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.stroke();
+  };
+  const fill = surface==='light'?P.brand : type==='red_flags'?P.alert
+             : surface==='dark'?P.lime:'#fff';
+  draw(0,1, surface==='light'?'rgba(0,0,0,.12)':'rgba(255,255,255,.16)', 3);
+  draw(0,prog, fill, 3);
+  const [cx,cy] = path(prog);
+  ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
+}
+
+function footer(ctx, slide, surface, type){
+  let y = H - RAIL - 26;
+  if(slide.source_note){
+    ctx.font = F(25,500); ctx.fillStyle = mut(surface); ctx.textBaseline='top';
+    y -= 32; ctx.fillText(slide.source_note, M, y);
+  }
+  if(type==='red_flags' || type==='cta'){
+    ctx.font = F(23,400); ctx.fillStyle = mut(surface);
+    const ls = wrap(ctx, LEGAL, F(23,400), W-2*M);
+    y -= 8 + ls.length*30;
+    let yy = y; for(const l of ls){ ctx.fillText(l, M, yy); yy += 30; }
+  }
+}
+
+/* ---- figures -------------------------------------------------------- */
+function figHeight(fig){
+  if(!fig) return 0;
+  if(fig.type==='scale') return (fig.bands||[]).length*66 + (fig.unit?34:0);
+  const n = (fig.points||[]).length;
+  return n<=3 ? 250 : n*86 + 68;
+}
+
+function drawFigure(ctx, fig, surface, y){
+  if(!fig) return y;
+  if(fig.type==='scale') return figScale(ctx, fig, surface, y);
+  return figTimeline(ctx, fig, surface, y);
+}
+
+function figScale(ctx, fig, surface, y){
+  const bands = fig.bands||[], labelW = W*0.30, barX = M+labelW;
+  const barMax = W - M - barX - W*0.17, lo = surface==='light'?P.brand:P.mid;
+  ctx.textBaseline='top';
+  if(fig.unit){ ctx.font=F(25,500); ctx.fillStyle=mut(surface);
+    ctx.fillText(fig.unit, barX, y-34); }
+  bands.forEach((b,i) => {
+    const t = i/Math.max(1,bands.length-1);
+    const col = b.alert ? P.alert : mix(lo, P.alert, t);
+    const cy = y + i*66;
+    ctx.font=F(46,600); ctx.fillStyle=ink(surface); ctx.fillText(b.label||'', M, cy);
+    const bw = barMax*(0.34+0.66*t), bh = 28;
+    ctx.fillStyle = col; roundRect(ctx, barX, cy+13, bw, bh, bh/2); ctx.fill();
+    if(b.value){ ctx.font=F(44,500); ctx.fillStyle=mut(surface);
+      ctx.fillText(b.value, barX+bw+20, cy+4); }
+  });
+  return y + bands.length*66;
+}
+
+function figTimeline(ctx, fig, surface, y){
+  const pts = fig.points||[];
+  if(pts.length<=3) return tlH(ctx,pts,surface,y);
+  return tlV(ctx,pts,surface,y);
+}
+
+function tlH(ctx,pts,surface,y){
+  const x0=M+10, x1=W-M-10, ly=y+90;
+  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(x0,ly); ctx.lineTo(x1,ly); ctx.stroke();
+  ctx.textBaseline='top';
+  pts.forEach((p,i)=>{
+    const px = x0 + (x1-x0)*(i/Math.max(1,pts.length-1));
+    const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
+    ctx.beginPath(); ctx.arc(px,ly,r,0,7); ctx.fillStyle=col; ctx.fill();
+    if(!p.alert){ ctx.beginPath(); ctx.arc(px,ly,r-5,0,7);
+      ctx.fillStyle = surface==='light'?P.paper:P.dark; ctx.fill(); }
+    ctx.font=F(46,700); ctx.fillStyle=col;
+    let w = ctx.measureText(p.at||'').width;
+    ctx.fillText(p.at||'', clamp(px-w/2,M,W-M-w), y);
+    if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+      w = ctx.measureText(p.label).width;
+      ctx.fillText(p.label, clamp(px-w/2,M,W-M-w), ly+24); }
+  });
+  return ly+110;
+}
+
+function tlV(ctx,pts,surface,y){
+  const rx = M+13, row = 86;
+  const top = y+row/2, bot = y+row*(pts.length-1)+row/2;
+  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
+  ctx.font=F(46,700);
+  const atW = Math.max(...pts.map(p=>ctx.measureText(p.at||'').width)) + 30;
+  ctx.textBaseline='middle';
+  pts.forEach((p,i)=>{
+    const cy = y + i*row + row/2;
+    const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
+    ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
+    if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
+      ctx.fillStyle = surface==='light'?P.paper:P.dark; ctx.fill(); }
+    ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
+    if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+      ctx.fillText(p.label, rx+34+atW, cy); }
+  });
+  ctx.textBaseline='top';
+  return bot+56;
+}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+function mix(a,b,t){const A=hex(a),B=hex(b);
+  return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;}
+
+/* ---- slides --------------------------------------------------------- */
+function renderSlide(slide, i, n){
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const ctx = c.getContext('2d');
+  const type = slide.type, surface = SURFACE[type];
+  bg(ctx, surface);
+  const hy = header(ctx, surface, i, n);
+  const top = hy+52, bot = H - RAIL - 96, cw = W - 2*M;
+  ctx.textBaseline='top';
+
+  if(type==='hook'){
+    let size=158, lines, lh;
+    do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
+        if(lines.length*lh <= (bot-top)*0.80) break; size-=6; } while(size>62);
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.hook, M, y, surface, type);
+    y = block(ctx, lines, M, y, F(size,800), lh, ink(surface), acc(surface,type));
+    ctx.fillStyle=acc(surface,type); ctx.fillRect(M, y+34, 168, 9);
+  }
+  else if(type==='scene' || type==='common_practice'){
+    const fig = slide.figure, fh = fig ? figHeight(fig)+52 : 0;
+    let size=92, hl, bl, lh, blh=Math.round(48*1.57);
+    while(true){
+      lh = Math.round(size*1.30);
+      hl = wrap(ctx, slide.headline, F(size,800), cw);
+      bl = slide.body ? wrap(ctx, slide.body, F(48,500), cw) : [];
+      const tot = 40 + hl.length*lh + (bl.length?30+bl.length*blh:0) + fh;
+      if(tot <= bot-top || size<=46) break; size-=4;
+    }
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW[type], M, y, surface, type);
+    y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
+    if(bl.length) y = block(ctx, bl, M, y+30, F(48,500), blh, ink(surface), acc(surface,type));
+    if(fig) drawFigure(ctx, fig, surface, y+52);
+  }
+  else if(type==='correction'){
+    const fig = slide.figure, cap = fig?0.44:0.82;
+    let size=104, lines, lh;
+    do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
+        if(lines.length*lh <= (bot-top)*cap) break; size-=5; } while(size>46);
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
+    y = block(ctx, lines, M, y, F(size,800), lh, '#fff', P.lime);
+    if(fig) drawFigure(ctx, fig, surface, y+50);
+  }
+  else if(type==='steps'){
+    const col = acc(surface,type), numW=116, blh=Math.round(46*1.57);
+    const hl = wrap(ctx, slide.headline, F(92,800), cw);
+    const rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(46,500),cw-numW));
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.steps, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(92,800), 120, ink(surface), col);
+    y += 46;
+    rows.forEach((r,i)=>{
+      const rh = r.length*blh;
+      ctx.font=F(132,700); ctx.fillStyle=col; ctx.textBaseline='middle';
+      ctx.fillText(String(i+1), M-4, y+rh/2-6);
+      ctx.textBaseline='top';
+      block(ctx, r, M+numW, y, F(46,500), blh, ink(surface), col);
+      y += rh + 52;
+      if(i<rows.length-1){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M+numW,y-28); ctx.lineTo(W-M,y-28); ctx.stroke(); }
+    });
+  }
+  else if(type==='red_flags'){
+    const col=P.alert, rw=7, gap=32, blh=Math.round(46*1.57);
+    const hl = wrap(ctx, slide.headline, F(92,800), cw);
+    const rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(46,500),cw-rw-gap));
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.red_flags, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(92,800), 120, ink(surface), col);
+    y += 40;
+    const fieldTop = y-34;
+    const start = y;
+    rows.forEach(r=>{
+      const rh = r.length*blh;
+      ctx.fillStyle=col; roundRect(ctx, 0, y+6, rw+26, rh-10, rw); ctx.fill();
+      block(ctx, r, M+rw+gap, y, F(46,500), blh, ink(surface), col);
+      y += rh + 34;
+    });
+    ctx.save(); ctx.globalCompositeOperation='destination-over';
+    ctx.fillStyle='rgba(248,152,24,.10)'; ctx.fillRect(0, fieldTop, W, y-20-fieldTop);
+    ctx.restore();
+  }
+  else if(type==='cta'){
+    const blh=Math.round(48*1.57);
+    const hl = wrap(ctx, slide.headline, F(92,800), cw);
+    const sl = wrap(ctx, slide.subheadline||'', F(48,500), cw);
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(92,800), 120, '#fff', '#fff');
+    ctx.fillStyle='#fff'; ctx.fillRect(M, y+18, 132, 6);
+    y = block(ctx, sl, M, y+46, F(48,500), blh, P.gradInk, '#fff');
+    ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(M,y+34); ctx.lineTo(W-M,y+34); ctx.stroke();
+    let x=M, ly=y+58, mp=74;
+    if(logo){ ctx.drawImage(logo,x,ly,mp,mp); x+=mp+22; }
+    else{ ctx.fillStyle='#fff'; roundRect(ctx,x,ly,mp,mp,16); ctx.fill();
+      ctx.fillStyle=P.brand; ctx.font=F(34,800); ctx.textAlign='center';
+      ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x+mp/2,ly+mp/2);
+      ctx.textAlign='left'; ctx.textBaseline='top'; x+=mp+22; }
+    ctx.fillStyle='#fff'; ctx.font=F(38,700); ctx.fillText(BRAND.name,x,ly+2);
+    ctx.fillStyle=mut(surface); ctx.font=F(28,500);
+    ctx.fillText(BRAND.tagline,x,ly+42);
+    ctx.fillText(BRAND.site+'  ·  '+BRAND.wa,x,ly+76);
+  }
+
+  footer(ctx, slide, surface, type);
+  rail(ctx, surface, type, i, n);
+  return c;
+}
+
+/* ---- app ------------------------------------------------------------ */
+const REQ = ['hook','scene','common_practice','correction','steps','red_flags','cta'];
+
+function parse(raw){
+  let t = raw.trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if(a === -1 || b === -1) throw new Error('That does not look like carousel data. Copy the whole block Claude gave you, from the first { to the last }.');
+  const doc = JSON.parse(t.slice(a, b+1));
+  if(!Array.isArray(doc.slides)) throw new Error('No slides found in that data.');
+  const got = doc.slides.map(s=>s.type).join(',');
+  if(got !== REQ.join(',')) throw new Error('The slides are not in the expected order. Ask Claude to send the carousel again.');
+  return doc;
+}
+
+$('#load').onclick = async () => {
+  const e = $('#err'); e.style.display='none';
+  let doc;
+  try { doc = parse($('#src').value); }
+  catch(ex){ e.textContent = ex.message; e.style.display='block'; return; }
+
+  $('#load').disabled = true; $('#load').textContent = 'Drawing the slides…';
+  try { await document.fonts.load('800 100px Mukta'); await document.fonts.load('500 48px Mukta'); } catch(_){}
+  if(logo === null) logo = await tryLogo();
+
+  const out = $('#out'); out.innerHTML = '';
+  doc.slides.forEach((s,i)=>{
+    const card = document.createElement('div'); card.className='slide-card';
+    const img = new Image();
+    img.src = renderSlide(s, i, doc.slides.length).toDataURL('image/png');
+    img.alt = (doc.alt_text && doc.alt_text[i]) || ('Slide ' + (i+1));
+    card.appendChild(img);
+    const cap = document.createElement('div'); cap.className='cap';
+    cap.innerHTML = `<span>Slide ${i+1} of ${doc.slides.length}</span>`
+                  + `<span class="save">press and hold to save</span>`;
+    card.appendChild(cap);
+    out.appendChild(card);
+  });
+
+  $('#capbox').textContent = buildCaption(doc);
+  $('#alts').textContent = 'Alt text for each slide is in the caption block below the hashtags.';
+  $('#gate').checked = false;
+  $('#stage').style.display='block';
+  $('#load').disabled = false; $('#load').textContent = 'Show me the slides';
+  gateToggle();
+  $('#stage').scrollIntoView({behavior:'smooth'});
+};
+
+function buildCaption(doc){
+  const L = [doc.caption || '', ''];
+  if(doc.sources && doc.sources.length){
+    L.push('Sources');
+    doc.sources.forEach(s => L.push('  · ' + s.name + ' — ' + s.url));
+    L.push('');
+  }
+  if(doc.hashtags) L.push(doc.hashtags.join(' '), '');
+  if(doc.alt_text){
+    L.push('ALT TEXT (paste per slide when uploading)');
+    doc.alt_text.forEach((a,i)=>L.push('  ' + (i+1) + '. ' + a));
+  }
+  return L.join('\n');
+}
+
+function gateToggle(){
+  // The gate blocks saving, never reading.
+  //
+  // The first version dimmed the slides until the box was ticked, which asked
+  // her to confirm she had read something it was actively making hard to read.
+  // She has to be able to study every slide at full contrast first — that is the
+  // whole review. What the tick releases is the ability to take them away.
+  const on = $('#gate').checked;
+  $('#out').classList.toggle('locked', !on);
+  $('#hint').style.display = on ? 'block' : 'none';
+  $('#waiting').style.display = on ? 'none' : 'block';
+}
+$('#gate').onchange = gateToggle;
+
+$('#copycap').onclick = async () => {
+  try{ await navigator.clipboard.writeText($('#capbox').textContent);
+       $('#copycap').textContent = 'Caption copied'; }
+  catch(_){ $('#copycap').textContent = 'Select the caption above and copy it'; }
+  setTimeout(()=>$('#copycap').textContent='Copy caption', 2200);
+};
+</script>
+</body>
+</html>

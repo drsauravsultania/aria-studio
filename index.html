@@ -26,10 +26,18 @@ body{margin:0;background:var(--paper);color:var(--ink);
 
 /* header */
 .top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
-.mark{width:40px;height:40px;border-radius:11px;background:var(--brand);flex:none;
-  display:grid;place-items:center;color:var(--paper);font-weight:800;font-size:21px}
+.mark{width:46px;height:46px;flex:none;object-fit:contain;border-radius:10px}
+.mark.fb{background:var(--brand);display:grid;place-items:center;
+  color:var(--paper);font-weight:800;font-size:23px}
+.brandline{margin:1px 0 0;font-size:13.5px;color:var(--brand);font-weight:600;
+  letter-spacing:.2px}
+.hi{color:var(--mut)}
+.foot{max-width:620px;margin:26px auto 0;padding:18px var(--pad) 0;
+  border-top:1px solid var(--line);font-size:13px;color:var(--mut);line-height:1.6}
+.foot b{color:var(--ink);font-weight:600}
+.foot a{color:var(--brand);text-decoration:none}
 h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.3px;line-height:1.15}
-.sub{color:var(--mut);font-size:15px;margin:2px 0 20px 51px}
+.sub{color:var(--mut);font-size:14.5px;margin:10px 0 20px}
 
 /* steps */
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
@@ -117,10 +125,15 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="wrap">
 
   <div class="top">
-    <div class="mark">A</div>
-    <h1>Aria Carousel Studio</h1>
+    <img class="mark" src="https://ariahealthcare.in/img/logo.png"
+         alt="Aria Healthcare" onerror="this.outerHTML='<div class=&quot;mark fb&quot;>A</div>'">
+    <div>
+      <h1>Carousel Studio</h1>
+      <p class="brandline">Aria Healthcare · Founded on Faith</p>
+    </div>
   </div>
-  <p class="sub">Type a topic. Check what comes back. Save the slides.</p>
+  <p class="sub">Paediatric · Neonatal · Surgical Care — Deoghar<br>
+     <span class="hi">बच्चों के लिए स्वास्थ्य जानकारी</span></p>
 
   <!-- 1 -->
   <div class="card" id="c1">
@@ -140,7 +153,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
     <h3>Paste what Claude sent</h3>
     <p id="p2">One tap, once you have copied the card. Your phone may ask
        permission to read the clipboard — say yes.</p>
-    <button id="paste">Paste from clipboard</button>
+    <button id="paste">Paste the carousel</button>
     <div class="gap"></div>
     <button class="quiet" id="manual">or paste by hand</button>
     <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
@@ -178,6 +191,15 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
     <button class="ghost" id="copycap">Copy caption</button>
   </div>
 
+</div>
+
+<div class="foot">
+  <b>Aria Healthcare</b> — a children's hospital in Deoghar.<br>
+  Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
+  OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
+  <a href="https://wa.me/916205254330">WhatsApp +91 62052 54330</a> ·
+  <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
+  Reg. No. 202/2035000530 · Clinical Establishments Act, 2010
 </div>
 
 <div class="dock" id="dock">
@@ -670,7 +692,7 @@ $('#paste').onclick = async () => {
   let text='';
   try{ text = await navigator.clipboard.readText(); }
   catch(_){
-    b.disabled=false; b.textContent='Paste from clipboard';
+    b.disabled=false; b.textContent='Paste the carousel';
     err.innerHTML = 'Your browser would not let me read the clipboard. '
       + 'Tap <b>or paste by hand</b> below and press and hold in the box instead.';
     show(err,true); show($('#src'),true); show($('#load'),true); $('#src').focus();
@@ -678,7 +700,7 @@ $('#paste').onclick = async () => {
   }
   b.textContent='Drawing the slides…';
   await build(text);
-  b.disabled=false; b.textContent='Paste from clipboard';
+  b.disabled=false; b.textContent='Paste the carousel';
 };
 
 $('#manual').onclick = () => {

@@ -355,11 +355,33 @@ function drawFigure(ctx, fig, surface, y){
 }
 
 function figScale(ctx, fig, surface, y){
-  const bands = fig.bands||[], labelW = W*0.30, barX = M+labelW;
-  const barMax = W - M - barX - W*0.17, lo = surface==='light'?P.brand:P.mid;
+  const bands = fig.bands||[];
+  if(!bands.length) return y;
+  const ramp = (fig.ramp || 'up') !== 'none';
+  const lo = surface==='light'?P.brand:P.mid;
   ctx.textBaseline='top';
   if(fig.unit){ ctx.font=F(25,500); ctx.fillStyle=mut(surface);
-    ctx.fillText(fig.unit, barX, y-34); }
+    ctx.fillText(fig.unit, M, y-34); }
+
+  // A ramp claims each band is worse than the last. True for bilirubin or scald
+  // temperature; false for a reference range, where it would draw the longest,
+  // most orange bar against the healthiest row. Values, not stages: no bars.
+  if(!ramp){
+    bands.forEach((b,i) => {
+      const cy = y + i*66;
+      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
+      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
+      ctx.fillText(b.label||'', M, cy);
+      const v = String(b.value||'');
+      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
+        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
+    });
+    return y + bands.length*66;
+  }
+
+  const labelW = W*0.30, barX = M+labelW;
+  const barMax = W - M - barX - W*0.17;
   bands.forEach((b,i) => {
     const t = i/Math.max(1,bands.length-1);
     const col = b.alert ? P.alert : mix(lo, P.alert, t);

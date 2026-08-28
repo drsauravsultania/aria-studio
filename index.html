@@ -25,6 +25,23 @@ h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.2px}
   padding:16px 16px 18px;margin-bottom:14px}
 .step h2{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
   color:var(--brand);margin:0 0 10px;font-weight:700}
+.hidden{display:none}
+input{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;
+  font:16px 'Mukta',sans-serif;background:var(--paper);color:var(--ink)}
+.prose{font-size:15px;line-height:1.6}
+.prose h3{font-size:15px;margin:14px 0 4px;color:var(--brand)}
+.prose a{color:var(--brand);word-break:break-word}
+.prose ul{padding-left:20px;margin:6px 0}
+.hookbtn{display:block;width:100%;text-align:left;background:var(--paper);
+  color:var(--ink);border:1.5px solid var(--line);border-radius:11px;
+  padding:14px 15px;margin-bottom:9px;font:600 16.5px 'Mukta',sans-serif;cursor:pointer}
+.hookbtn.on{border-color:var(--brand);background:#EEF6F1}
+.hookbtn small{display:block;font-weight:500;color:var(--mut);margin-top:3px;font-size:13.5px}
+.busy{display:none;align-items:center;gap:11px;justify-content:center;
+  padding:18px;color:var(--mut);font-size:15px}
+.spin{width:17px;height:17px;border:2.5px solid var(--line);border-top-color:var(--brand);
+  border-radius:50%;animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
 textarea{width:100%;min-height:160px;border:1px solid var(--line);border-radius:10px;
   padding:12px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
   background:var(--paper);color:var(--ink);resize:vertical}
@@ -54,6 +71,21 @@ button[disabled]{opacity:.4;cursor:not-allowed}
 pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;padding:14px;margin:0}
 .row{display:flex;gap:10px}.row>*{flex:1}
+.go{display:block;text-decoration:none;background:var(--brand);color:#fff;
+  border-radius:14px;padding:15px 18px;margin-bottom:14px;font-weight:700;font-size:17px}
+.go span{display:block;font-weight:400;font-size:14px;opacity:.82;margin-top:3px}
+.srcbox{background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:16px 16px 4px;margin-bottom:14px}
+.srcbox h2{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--brand);margin:0 0 4px;font-weight:700}
+.srcbox p.lead{font-size:14px;color:var(--mut);margin:0 0 12px}
+.srcbox ol{margin:0;padding-left:20px}
+.srcbox li{margin-bottom:13px;font-size:14.5px;line-height:1.5}
+.srcbox a{color:var(--brand);word-break:break-word}
+.srcbox .acc{color:var(--mut);font-size:13px}
+.diverge{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:12px;
+  padding:13px 15px;margin:4px 0 14px;font-size:14.5px;color:#7A4A10}
+.diverge b{display:block;margin-bottom:5px}
 .tiny{font-size:13px;color:var(--mut);margin:10px 2px 0}
 </style>
 </head>
@@ -64,17 +96,56 @@ pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var
   <div class="mark" id="mark">A</div>
   <h1>Aria Carousel Studio</h1>
 </header>
-<p class="sub">Paste the carousel, check it, save the slides.</p>
+<p class="sub">Type a topic. Check what comes back. Save the slides.</p>
 
-<div class="step">
-  <h2>1 · The carousel</h2>
-  <textarea id="src" placeholder="Paste the carousel data Claude gave you here."></textarea>
+<a class="go" href="https://claude.ai/project/01a04506-58dc-75e4-b54d-8bab53c585b7"
+   target="_blank" rel="noopener">
+  Get a carousel from Claude
+  <span>Ask for a topic, then copy what it sends back</span>
+</a>
+
+<!-- passphrase ------------------------------------------------------- -->
+<div class="step" id="lock">
+  <h2>First time on this device</h2>
+  <input id="pass" type="password" placeholder="Passphrase" autocomplete="current-password">
   <div style="height:10px"></div>
-  <button id="load">Show me the slides</button>
-  <div class="err" id="err"></div>
+  <button id="unlock">Continue</button>
+  <p class="tiny">Saurav sent you this. You will only be asked once on this phone.</p>
 </div>
 
-<div id="stage" class="slides">
+<!-- topic ------------------------------------------------------------ -->
+<div class="step hidden" id="s1">
+  <h2>1 · What is the carousel about?</h2>
+  <input id="topic" placeholder="e.g. fever in a baby under 3 months">
+  <div style="height:10px"></div>
+  <button id="go">Look up the guidelines</button>
+  <p class="tiny">It reads IAP, NNF, MoHFW, ICMR and WHO before writing anything.</p>
+</div>
+
+<!-- sources ---------------------------------------------------------- -->
+<div class="step hidden" id="s2">
+  <h2>2 · What the guidelines say</h2>
+  <div id="findings" class="prose"></div>
+</div>
+
+<!-- hooks ------------------------------------------------------------ -->
+<div class="step hidden" id="s3">
+  <h2>3 · Choose the opening line</h2>
+  <div id="hooks"></div>
+  <input id="ownhook" placeholder="Or write your own opening line">
+  <div style="height:10px"></div>
+  <button id="makeit">Make the carousel</button>
+</div>
+
+<!-- slides ----------------------------------------------------------- -->
+<div id="stage" class="hidden">
+  <div class="step">
+    <h2>4 · Anything to change?</h2>
+    <input id="fix" placeholder="e.g. slide 4 should say 15, not 12">
+    <div style="height:10px"></div>
+    <button class="ghost" id="revise">Change it</button>
+    <p class="tiny">Say it however you would say it out loud. Redo this as often as you like.</p>
+  </div>
 
   <div class="gate">
     <label>
@@ -85,15 +156,21 @@ pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var
   </div>
 
   <div class="waiting" id="waiting">
-    Read all seven slides first. Tick the box above when you have checked
-    every figure, and saving will unlock.
+    Read all seven slides first. Tick the box above when you have checked every
+    figure, and saving will unlock.
   </div>
 
   <div class="hint" id="hint">
-    <b>To save a slide:</b> press and hold it, then choose <b>Add to Photos</b>
-    on iPhone or <b>Download image</b> on Android and desktop. Save all seven in
-    order, then post them together as one Instagram carousel.
+    <b>To save a slide:</b> press and hold it, then choose <b>Download image</b>.
+    Save all seven in order, then post them together as one Instagram carousel.
   </div>
+
+  <div class="srcbox" id="srcbox" style="display:none">
+    <h2>Where this came from</h2>
+    <p class="lead">Every figure on the slides should match one of these. Tap to open.</p>
+    <ol id="srclist"></ol>
+  </div>
+  <div class="diverge" id="diverge" style="display:none"></div>
 
   <div id="out"></div>
 
@@ -102,14 +179,23 @@ pre.caption{white-space:pre-wrap;font:14px/1.6 'Mukta',sans-serif;background:var
     <pre class="caption" id="capbox"></pre>
     <div style="height:10px"></div>
     <button class="ghost" id="copycap">Copy caption</button>
-    <p class="tiny" id="alts"></p>
+  </div>
+
+  <div class="step">
+    <h2>Sources</h2>
+    <div id="srcs" class="prose"></div>
   </div>
 </div>
+
+<div class="err" id="err"></div>
+<div class="busy" id="busy"><span class="spin"></span><span id="busytxt">Working…</span></div>
 
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
+const escapeHtml = t => String(t).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
            paper:'#F6F3EC', ink:'#10201A', mut:'#646C64', rule:'#D6D0C3',
            dark:'#0E1C16', darkInk:'#F6F3EC', darkMut:'#A4B2A8', gradInk:'#CBE8D6'};
@@ -494,6 +580,27 @@ $('#load').onclick = async () => {
     card.appendChild(cap);
     out.appendChild(card);
   });
+
+  // Sources sit above the slides, not buried in the caption. She is checking
+  // figures against them while she reads; making her scroll past seven slides
+  // to find the reference is how checking quietly stops happening.
+  const sl = $('#srclist'); sl.innerHTML = '';
+  if(doc.sources && doc.sources.length){
+    doc.sources.forEach(src => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="${src.url}" target="_blank" rel="noopener">`
+        + `${escapeHtml(src.name)}</a>`
+        + (src.accessed ? `<div class="acc">checked ${escapeHtml(src.accessed)}</div>` : '');
+      sl.appendChild(li);
+    });
+    $('#srcbox').style.display = 'block';
+  } else $('#srcbox').style.display = 'none';
+
+  if(doc.guideline_conflict){
+    $('#diverge').innerHTML = '<b>Where guidance disagrees</b>'
+      + escapeHtml(doc.guideline_conflict);
+    $('#diverge').style.display = 'block';
+  } else $('#diverge').style.display = 'none';
 
   $('#capbox').textContent = buildCaption(doc);
   $('#alts').textContent = 'Alt text for each slide is in the caption block below the hashtags.';

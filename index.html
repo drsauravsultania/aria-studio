@@ -66,6 +66,8 @@ button.quiet{background:transparent;color:var(--mut);font-weight:500;font-size:1
 button[disabled]{opacity:.35;pointer-events:none}
 .gap{height:9px}
 
+input[type=text]{width:100%;border:1px solid var(--line);border-radius:11px;
+  padding:14px;font:17px 'Mukta',sans-serif;background:#fff;color:var(--ink)}
 textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:11px;
   padding:12px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
   background:var(--paper);color:var(--mut);resize:vertical;margin-bottom:10px}
@@ -117,6 +119,10 @@ textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:
   border-top:1px solid var(--line);display:none}
 .dock.on{display:block}
 .dock .inner{max-width:620px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.dock .chatrow{margin-bottom:8px}
+.dock .chatrow input{flex:1;border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;font:16px 'Mukta',sans-serif;background:#fff}
+.dock .chatrow button{flex:none;width:auto;padding:12px 22px}
 .dock .count{font-size:15px;font-weight:600;flex:none}
 .dock .count b{color:var(--brand)}
 .dock button{flex:1;padding:13px}
@@ -144,27 +150,24 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <!-- 1 -->
   <div class="card" id="c1">
     <p class="eyebrow"><i>1</i> Write it</p>
-    <h3>Ask Claude for a carousel</h3>
-    <p>Give it a topic. It checks the Indian guidelines first, then sends back a
-       short summary and a card holding the carousel. Read the summary, then tap
-       the card and copy it.</p>
-    <a class="btn" href="https://claude.ai/project/01a04506-58dc-75e4-b54d-8bab53c585b7"
-       target="_blank" rel="noopener">Open Claude
-       <small>Aria Carousels project</small></a>
+    <h3>What should this carousel teach?</h3>
+    <p>Type the topic. The writer checks the Indian guidelines, plans the
+       pictures, and builds all seven slides.</p>
+    <input id="topic" type="text" placeholder="e.g. worms and deworming"
+           autocomplete="off">
+    <div class="gap"></div>
+    <button id="gen">Generate the carousel</button>
+    <div class="msg bad hidden" id="generr"></div>
   </div>
 
-  <!-- 2 -->
+  <!-- 2: still possible to bring one from Claude -->
   <div class="card" id="c2">
-    <p class="eyebrow"><i>2</i> Bring it here</p>
-    <h3>Open what Claude sent</h3>
-    <p id="p2">Tap <b>Download</b> on the card Claude sent, then open that file
-       here. It will be in your Downloads.</p>
-    <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
-    <button id="pick">Open the file Claude sent</button>
+    <p class="eyebrow"><i>2</i> Or bring one</p>
+    <button class="ghost" id="pick">Open a file from Claude</button>
     <div class="gap"></div>
-    <button class="ghost" id="paste">Or paste it instead</button>
-    <div class="gap"></div>
+    <button class="quiet" id="paste">Paste a carousel</button>
     <button class="quiet" id="manual">or paste it in the box</button>
+    <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
     <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
     <button id="load" class="ghost hidden">Show me the slides</button>
     <div class="msg bad hidden" id="err"></div>
@@ -212,6 +215,12 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 </div>
 
 <div class="dock" id="dock">
+  <div class="inner chatrow">
+    <input id="chat" type="text"
+           placeholder="Ask for any change — wording, a number, a picture…"
+           autocomplete="off">
+    <button id="send">Send</button>
+  </div>
   <div class="inner">
     <span class="count" id="count"><b>0</b> of 7 saved</span>
     <button id="dockcap" class="ghost">Copy caption</button>
@@ -857,17 +866,30 @@ async function makeImage(i, btn){
     }
 
     if(!subject){
-      const r = await fetch(IMG_API + '/suggest', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          topic: DOC.topic || '',
-          slide: { type: s.type, headline: s.headline || '', body: s.body || '' },
-        }),
-      });
-      const out = await r.json();
-      if(!r.ok || !out.subject) throw new Error(out.error || 'Could not think of a picture.');
-      subject = out.subject; kind = out.kind || kind;
+      // Normally the carousel arrives with the subject already decided. This
+      // path is the fallback — and the fallback has its own fallback, because
+      // Google refuses the text model from some Cloudflare locations
+      // ("user location is not supported") while happily serving the image
+      // model. If the machine cannot propose, ask her rather than dead-ending.
+      try{
+        const r = await fetch(IMG_API + '/suggest', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            topic: DOC.topic || '',
+            slide: { type: s.type, headline: s.headline || '', body: s.body || '' },
+          }),
+        });
+        const out = await r.json();
+        if(r.ok && out.subject){ subject = out.subject; kind = out.kind || kind; }
+      }catch(_){}
+      if(!subject){
+        const typed = window.prompt(
+          'What should the picture show? Name the object or the moment.\n' +
+          'For example: a digital thermometer beside a toy on a bedsheet');
+        if(!typed || !typed.trim()){ btn.textContent = label; btn.disabled = false; return; }
+        subject = typed.trim();
+      }
     }
 
     const r2 = await fetch(IMG_API + '/generate', {
@@ -1012,6 +1034,53 @@ function caption(doc){
     doc.alt_text.forEach((a,i)=>L.push('  '+(i+1)+'. '+a)); }
   return L.join('\n');
 }
+
+/* type a topic, get a carousel */
+$('#gen').onclick = async () => {
+  const topic = $('#topic').value.trim();
+  const err = $('#generr'); show(err,false);
+  if(!topic){ $('#topic').focus(); return; }
+  const b = $('#gen');
+  b.disabled = true;
+  b.textContent = 'Checking the guidelines and writing… about a minute';
+  try{
+    const r = await fetch(IMG_API + '/carousel', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ topic }),
+    });
+    const out = await r.json();
+    if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
+    await build(JSON.stringify(out.doc));
+  }catch(e){
+    err.textContent = e.message; show(err,true);
+  }
+  b.disabled = false; b.textContent = 'Generate the carousel';
+};
+
+/* chat bar: every change goes through the same door */
+async function sendChange(){
+  const box = $('#chat'), btn = $('#send');
+  const instruction = box.value.trim();
+  if(!instruction || !DOC) return;
+  btn.disabled = true; box.disabled = true; btn.textContent = 'Working…';
+  try{
+    const r = await fetch(IMG_API + '/revise', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ doc: DOC, instruction }),
+    });
+    const out = await r.json();
+    if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
+    box.value = '';
+    await build(JSON.stringify(out.doc));
+  }catch(e){
+    $('#err').textContent = e.message; show($('#err'), true);
+  }
+  btn.disabled = false; box.disabled = false; btn.textContent = 'Send';
+}
+$('#send').onclick = sendChange;
+$('#chat').addEventListener('keydown', e => { if(e.key === 'Enter') sendChange(); });
 
 /* open the downloaded file — the path that needs no permissions at all */
 $('#pick').onclick = () => $('#file').click();

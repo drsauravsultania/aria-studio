@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
+<style>:root{--brand:#056535;--line:#DED8CB;--bg:#F6F3EC}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#10201A;
+font:17px/1.5 'Mukta',sans-serif;padding:22px 16px}main{max-width:640px;margin:0 auto}
+h1{color:var(--brand)}input{width:100%;border:1px solid var(--line);border-radius:10px;
+padding:12px;font:inherit}button{padding:12px 20px;border:0;border-radius:10px;
+background:var(--brand);color:#fff;font:600 16px 'Mukta';cursor:pointer}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+.card b{color:var(--brand)}.ok{color:#3A7D44;font-weight:700}
+small{color:#68706A;display:block}</style></head><body><main>
+<h1>Doctor approvals</h1>
+<p>Verify the credential and registration number before approving — this is the
+clinical gate. The passphrase stays only in this tab.</p>
+<input id="sec" type="password" placeholder="Admin passphrase">
+<div style="height:10px"></div>
+<button onclick="load()">Show pending doctors</button>
+<div id="list"></div>
+<script>
+const API='https://img.ariahealthcare.in';
+const H=()=>({'x-admin':document.getElementById('sec').value,'content-type':'application/json'});
+async function load(){
+  const r=await fetch(API+'/pending',{headers:H()});
+  const o=await r.json();
+  const L=document.getElementById('list');
+  if(o.error){L.innerHTML='<p><b>'+o.error+'</b></p>';return}
+  if(!o.brands.length){L.innerHTML='<p>No registrations yet.</p>';return}
+  L.innerHTML=o.brands.map(b=>`
+   <div class="card">
+     <b>${b.name}</b> — ${b.status==='approved'?'<span class="ok">approved</span>':'pending'}
+     <small>${b.credential||''}</small>
+     <small>${b.handle||''} · ${b.reg||'no reg. number'} · ${(b.allowedDepartments||[]).join(', ')}</small>
+     <small>Registered ${b.registered||''}</small>
+     ${b.status!=='approved'
+       ?`<div style="margin-top:10px"><button onclick="approve('${b.key}')">Approve ${b.name}</button></div>`
+       :`<small>Link: studio.ariahealthcare.in/lab.html?brand=${b.key}</small>`}
+   </div>`).join('');
+}
+async function approve(key){
+  const r=await fetch(API+'/approve',{method:'POST',headers:H(),
+    body:JSON.stringify({key})});
+  const o=await r.json();
+  if(o.ok) load(); else alert(o.error||'Failed');
+}
+</script></main></body></html>

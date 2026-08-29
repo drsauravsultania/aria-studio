@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#056535">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aria Carousels">
+<title>Aria Carousel Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#056535; --mid:#08A858; --lime:#88C848; --alert:#F89818;
+  --paper:#F6F3EC; --card:#fff; --ink:#10201A; --mut:#5C6A60;
+  --line:#E2DCCF; --ok:#0E7A45;
+  --pad:16px; --safe:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:17px/1.55 'Mukta',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  padding-bottom:calc(96px + var(--safe))}
+.wrap{max-width:620px;margin:0 auto;padding:18px var(--pad) 24px}
+
+/* header */
+.top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+.mark{width:46px;height:46px;flex:none;object-fit:contain;border-radius:10px}
+.mark.fb{background:var(--brand);display:grid;place-items:center;
+  color:var(--paper);font-weight:800;font-size:23px}
+.brandline{margin:1px 0 0;font-size:13.5px;color:var(--brand);font-weight:600;
+  letter-spacing:.2px}
+.hi{color:var(--mut)}
+.foot{max-width:620px;margin:26px auto 0;padding:18px var(--pad) 0;
+  border-top:1px solid var(--line);font-size:13px;color:var(--mut);line-height:1.6}
+.foot b{color:var(--ink);font-weight:600}
+.foot a{color:var(--brand);text-decoration:none}
+h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.3px;line-height:1.15}
+.sub{color:var(--mut);font-size:14.5px;margin:10px 0 20px}
+
+/* steps */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px;margin-bottom:14px}
+.eyebrow{font-size:11.5px;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--brand);font-weight:700;margin:0 0 10px;display:flex;
+  align-items:center;gap:8px}
+.eyebrow i{width:20px;height:20px;border-radius:50%;background:var(--brand);
+  color:#fff;font-style:normal;font-size:12px;display:grid;place-items:center;
+  font-weight:700;flex:none}
+.eyebrow.done i{background:var(--ok)}
+.card h3{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:-.2px}
+.card p{margin:0 0 14px;color:var(--mut);font-size:15px}
+
+/* buttons */
+button,.btn{font:700 17px 'Mukta',sans-serif;border:0;border-radius:13px;
+  padding:15px 18px;background:var(--brand);color:#fff;cursor:pointer;
+  width:100%;display:block;text-align:center;text-decoration:none;
+  transition:transform .06s ease}
+button:active,.btn:active{transform:scale(.985)}
+.btn small{display:block;font-weight:400;font-size:14px;opacity:.85;margin-top:2px}
+button.ghost{background:transparent;color:var(--brand);
+  box-shadow:inset 0 0 0 1.5px var(--brand)}
+button.quiet{background:transparent;color:var(--mut);font-weight:500;font-size:15px;
+  padding:11px}
+button[disabled]{opacity:.35;pointer-events:none}
+.gap{height:9px}
+
+select{width:100%;border:1px solid var(--line);border-radius:11px;
+  padding:14px;font:17px 'Mukta',sans-serif;background:#fff;color:var(--ink);
+  -webkit-appearance:none;appearance:none}
+input[type=text]{width:100%;border:1px solid var(--line);border-radius:11px;
+  padding:14px;font:17px 'Mukta',sans-serif;background:#fff;color:var(--ink)}
+textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:11px;
+  padding:12px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--paper);color:var(--mut);resize:vertical;margin-bottom:10px}
+.hidden{display:none!important}
+
+.msg{border-radius:12px;padding:13px 15px;font-size:15px;margin-top:12px}
+.msg.bad{background:#FDF2E7;border:1px solid #F0C79A;color:#8A4708}
+.msg.good{background:#EAF5EE;border:1px solid #BEDFCB;color:#12563A}
+
+/* sources */
+.src h4{font-size:11.5px;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--brand);margin:0 0 3px;font-weight:700}
+.src ol{margin:10px 0 0;padding-left:19px}
+.src li{margin-bottom:12px;font-size:15px;line-height:1.45}
+.src a{color:var(--brand);word-break:break-word}
+.src .acc{color:var(--mut);font-size:13px}
+.diverge{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:14px;
+  padding:15px 16px;margin-bottom:14px;font-size:15px;color:#7A4A10}
+.diverge b{display:block;margin-bottom:5px}
+
+/* gate */
+.gate{background:#FFFBF4;border:1px solid #F0D9B4;border-radius:16px;
+  padding:16px;margin-bottom:14px}
+.gate.on{background:#EAF5EE;border-color:#BEDFCB}
+.gate label{display:flex;gap:13px;align-items:flex-start;cursor:pointer;font-size:16px}
+.gate input{width:23px;height:23px;margin:2px 0 0;accent-color:var(--brand);flex:none}
+
+/* slides */
+.slide{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:11px;margin-bottom:13px}
+.slide img{width:100%;display:block;border-radius:10px}
+.slide .bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.slide .n{font-size:14px;color:var(--mut);font-weight:600;flex:none;min-width:58px}
+.slide .bar button{padding:11px 14px;font-size:15.5px;flex:1}
+.slide .addimg,.slide .genimg{background:transparent;color:var(--brand);
+  box-shadow:inset 0 0 0 1.5px var(--brand)}
+.slide .genimg{background:var(--brand);color:#fff;box-shadow:none}
+.slide .bar{flex-wrap:wrap}
+.locked .slide .addimg,
+.locked .slide .genimg{opacity:1;pointer-events:auto}
+.slide.saved{border-color:#BEDFCB;background:#F7FCF9}
+.slide.saved button{background:var(--ok)}
+.locked .slide button{opacity:.3;pointer-events:none}
+
+/* sticky bar */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;
+  padding:10px var(--pad) calc(10px + var(--safe));
+  background:rgba(246,243,236,.94);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);display:none}
+.dock.on{display:block}
+.dock .inner{max-width:620px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.dock .chatrow{margin-bottom:8px}
+.dock .chatrow input{flex:1;border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;font:16px 'Mukta',sans-serif;background:#fff}
+.dock .chatrow button{flex:none;width:auto;padding:12px 22px}
+.dock .count{font-size:15px;font-weight:600;flex:none}
+.dock .count b{color:var(--brand)}
+.dock button{flex:1;padding:13px}
+
+pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(--paper);
+  border:1px solid var(--line);border-radius:11px;padding:14px;margin:0 0 10px;
+  max-height:230px;overflow:auto}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="top">
+    <img class="mark" src="https://ariahealthcare.in/img/logo.png"
+         alt="Aria Healthcare" onerror="this.outerHTML='<div class=&quot;mark fb&quot;>A</div>'">
+    <div>
+      <h1>Carousel Lab</h1>
+      <p class="brandline">Aria Healthcare · Founded on Faith</p>
+    </div>
+  </div>
+  <p class="sub">Paediatric · Neonatal · Surgical Care — Deoghar<br>
+     <span class="hi">बच्चों के लिए स्वास्थ्य जानकारी</span></p>
+
+  <!-- 1 -->
+  <div class="card" id="c1">
+    <p class="eyebrow"><i>1</i> Write it</p>
+    <h3>What should this carousel teach?</h3>
+    <p>Type the topic. The writer checks the Indian guidelines, plans the
+       pictures, and builds all seven slides.</p>
+    <select id="dept" aria-label="Department">
+      <option value="paediatrics">Paediatrics</option>
+    </select>
+    <div class="gap"></div>
+    <input id="topic" type="text" placeholder="e.g. worms and deworming"
+           autocomplete="off">
+    <div class="gap"></div>
+    <button id="gen">Generate the carousel</button>
+    <div class="msg bad hidden" id="generr"></div>
+  </div>
+
+  <!-- 2: still possible to bring one from Claude -->
+  <div class="card" id="c2">
+    <p class="eyebrow"><i>2</i> Or bring one</p>
+    <button class="ghost" id="pick">Open a file from Claude</button>
+    <div class="gap"></div>
+    <button class="quiet" id="paste">Paste a carousel</button>
+    <button class="quiet" id="manual">or paste it in the box</button>
+    <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
+    <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
+    <button id="load" class="ghost hidden">Show me the slides</button>
+    <div class="msg bad hidden" id="err"></div>
+  </div>
+
+</div>
+
+<div class="wrap hidden" id="stage">
+
+  <div class="card src" id="srcbox">
+    <h4>Where this came from</h4>
+    <p style="margin:0;font-size:14.5px">Every figure on the slides should match
+       one of these. Tap to open.</p>
+    <ol id="srclist"></ol>
+  </div>
+
+  <div class="diverge hidden" id="diverge"></div>
+
+  <div class="gate" id="gatebox">
+    <label>
+      <input type="checkbox" id="gate">
+      <span><b>I have read every slide and checked each figure against its source.</b><br>
+      Saving unlocks once this is ticked. Nothing is published until you post it.</span>
+    </label>
+  </div>
+
+  <div id="out" class="locked"></div>
+
+  <div class="card">
+    <p class="eyebrow"><i>4</i> Post it</p>
+    <h3>Caption</h3>
+    <pre class="cap" id="capbox"></pre>
+    <button class="ghost" id="copycap">Copy caption</button>
+  </div>
+
+</div>
+
+<div class="foot">
+  <b>Aria Healthcare</b> — a children's hospital in Deoghar.<br>
+  Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
+  OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
+  <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
+  <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
+  Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
+  <span style="opacity:.55">Aria Lab v20260829-1</span>
+</div>
+
+<div class="dock" id="dock">
+  <div class="inner chatrow">
+    <input id="chat" type="text"
+           placeholder="Ask for any change — wording, a number, a picture…"
+           autocomplete="off">
+    <button id="send">Send</button>
+  </div>
+  <div class="inner">
+    <span class="count" id="count"><b>0</b> of 7 saved</span>
+    <button id="dockcap" class="ghost">Copy caption</button>
+  </div>
+</div>
+
+<script>
+window.addEventListener('error', e => {
+  // A script error used to leave every button silently inert. Surface it: a page
+  // that says what broke is repairable; one that just does nothing is not.
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;padding:12px 16px;'
+    + 'background:#8A4708;color:#fff;font:14px/1.4 sans-serif';
+  d.textContent = 'Something went wrong loading this page. Please tell Saurav: '
+    + (e.message || 'unknown error');
+  document.body && document.body.appendChild(d);
+});
+
+const $ = s => document.querySelector(s);
+const escapeHtml = t => String(t).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
+           paper:'#F6F3EC', ink:'#10201A', mut:'#686C68', rule:'#DED8CB',
+           dark:'#E3F0E7', darkInk:'#0E281B', darkMut:'#627C6C', darkRule:'#C6DBCD',
+           alertBg:'#FDF0E0', alertInk:'#3A220A', alertMut:'#8C6A42',
+           alertRule:'#F0D6B4', gradInk:'#2B4C3A', gradMut:'#5E7A69'};
+const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
+
+const BRAND = {
+  name:'Aria Healthcare', tagline:'Founded on Faith',
+  credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
+  site:'ariahealthcare.in', 
+  ig:'@drsonaliped_ariahealthcare',
+  reg:'Reg. No. 202/2035000530', mark:'A'
+};
+const LEGAL = 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
+
+const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
+  common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',
+  steps:'WHAT TO DO INSTEAD', red_flags:'SEEK CARE TODAY', cta:'IN SHORT'};
+const SURFACE = {hook:'light', scene:'dark', common_practice:'light',
+  correction:'grad', steps:'light', red_flags:'alertbg', cta:'grad'};
+
+let logo = null;
+const tryLogo = () => new Promise(res => {
+  const i = new Image(); i.crossOrigin = 'anonymous';
+  i.onload = () => res(i); i.onerror = () => res(null);
+  i.src = 'https://ariahealthcare.in/img/logo.png';
+});
+
+const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : s==='photo'?'#F6F3EC' : P.gradInk;
+const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : s==='photo'?'#D9E4DC' : P.gradMut;
+const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : s==='photo'?'rgba(255,255,255,.35)' : '#BCD8C7';
+const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : s==='photo' ? P.lime : P.brand;
+
+const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
+
+function wrap(ctx, text, font, maxW){
+  // Tag every word as accent or plain, wrap on words, then re-emit the braces per
+  // line. Matching "{...}" as one token made a multi-word run unbreakable, and
+  // tracking a single open flag let the run swallow the word before it.
+  ctx.font = font;
+  const words = [];
+  let accent = false;
+  for(let raw of (text || '').split(/\s+/).filter(Boolean)){
+    const opens = raw.includes('{'), closes = raw.includes('}');
+    if(opens) accent = true;
+    words.push({ w: raw.replace(/[{}]/g, ''), a: accent });
+    if(closes) accent = false;
+  }
+  const emit = ws => {
+    let out = '', run = false;
+    ws.forEach((x, i) => {
+      if(x.a && !run){ out += (i ? ' ' : '') + '{' + x.w; run = true; }
+      else if(!x.a && run){ out += '}' + (i ? ' ' : '') + x.w; run = false; }
+      else out += (i ? ' ' : '') + x.w;
+    });
+    return out + (run ? '}' : '');
+  };
+  const lines = [];
+  let cur = [];
+  for(const x of words){
+    const trial = cur.concat(x).map(k => k.w).join(' ');
+    if(ctx.measureText(trial).width > maxW && cur.length){
+      lines.push(emit(cur)); cur = [];
+    }
+    cur.push(x);
+  }
+  if(cur.length) lines.push(emit(cur));
+  return lines.length ? lines : [''];
+}
+
+function drawLine(ctx, line, x, y, font, colour, accent){
+  ctx.font = font; ctx.textBaseline = 'top';
+  const parts = []; let last = 0;
+  const re = /\{([^}]+)\}/g; let m;
+  while((m = re.exec(line))){
+    if(m.index > last) parts.push([line.slice(last, m.index), false]);
+    parts.push([m[1], true]); last = m.index + m[0].length;
+  }
+  if(last < line.length) parts.push([line.slice(last), false]);
+  if(!parts.length) parts.push([line, false]);
+  for(const [txt, isAcc] of parts){
+    ctx.fillStyle = isAcc ? accent : colour;
+    ctx.fillText(txt, x, y);
+    x += ctx.measureText(txt).width;
+  }
+}
+
+function block(ctx, lines, x, y, font, lh, colour, accent){
+  for(const l of lines){ drawLine(ctx, l, x, y, font, colour, accent); y += lh; }
+  return y;
+}
+
+function bg(ctx, surface){
+  if(surface === 'grad'){
+    // Pastel throughout. The deep slab carried authority but read as heavy next
+    // to six soft slides; the argument now sits on a pale wash and the weight
+    // comes from the type and the accent, not from the paper.
+    const g = ctx.createLinearGradient(0, 0, W*0.55, H);
+    g.addColorStop(0,'#EFF7F1'); g.addColorStop(.55,'#E1F0E7'); g.addColorStop(1,'#D3E9DC');
+    ctx.fillStyle = g;
+  } else ctx.fillStyle = surface==='light' ? P.paper
+                       : surface==='alertbg' ? P.alertBg : P.dark;
+  ctx.fillRect(0,0,W,H);
+}
+
+function header(ctx, surface, i, n, band){
+  const mp = 62, y = band ? band + 34 : M - 6; let x = M;
+  if(logo){ ctx.drawImage(logo, x, y, mp, mp); x += mp + 22; }
+  else{
+    ctx.fillStyle = acc(surface,'');
+    roundRect(ctx, x, y, mp, mp, 14); ctx.fill();
+    ctx.strokeStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
+    ctx.fillStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    ctx.font = F(29,800); ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillText(BRAND.mark, x+mp/2, y+mp/2+1);
+    ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
+  }
+  stackCentred(ctx, [
+    { txt: BRAND.name,       font: F(34,700), fill: ink(surface) },
+    { txt: BRAND.credential, font: F(25,500), fill: mut(surface) },
+  ], x, y + mp/2, 13);
+  ctx.font = F(27,600); ctx.textAlign='right'; ctx.fillStyle = mut(surface);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y + mp/2);
+  ctx.textBaseline = 'top';
+  ctx.textAlign='left';
+  const ry = y + mp + 30;
+  ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(M,ry); ctx.lineTo(W-M,ry); ctx.stroke();
+  return ry;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+function _eyebrowH(){ return 40; }
+
+function inkOf(ctx, txt, font){
+  // Nominal font size is not ink height. Centring a text block on a logo using
+  // the point size puts it visibly high every time, because the em box carries
+  // space above the caps and below the baseline that the glyphs never use.
+  // Measure the real extents instead.
+  ctx.font = font;
+  const m = ctx.measureText(txt || 'Hg');
+  return { a: m.actualBoundingBoxAscent || 0, d: m.actualBoundingBoxDescent || 0 };
+}
+
+function stackCentred(ctx, lines, x, cy, gap){
+  // lines: [{txt, font, fill}] — drawn as one block, optically centred on cy.
+  const ink = lines.map(l => inkOf(ctx, l.txt, l.font));
+  const total = ink.reduce((s,k) => s + k.a + k.d, 0) + gap * (lines.length - 1);
+  let baseline = cy - total/2 + ink[0].a;
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((l, i) => {
+    ctx.font = l.font; ctx.fillStyle = l.fill;
+    ctx.fillText(l.txt, x, baseline);
+    if(i < lines.length - 1) baseline += ink[i].d + gap + ink[i+1].a;
+  });
+  ctx.textBaseline = 'top';
+}
+
+function eyebrow(ctx, text, x, y, surface, type){
+  ctx.font = F(29,700); ctx.fillStyle = acc(surface,type); ctx.textBaseline='top';
+  if(/[\u0900-\u097F]/.test(text)) ctx.fillText(text, x, y);
+  else { let cx = x; for(const ch of text){ ctx.fillText(ch,cx,y); cx += ctx.measureText(ch).width + 2.6; } }
+  return y + 40;
+}
+
+function drawIG(ctx, x, y, s, colour, mono){
+  // The real Instagram gradient, because that is what people recognise in a
+  // quarter-second. On the deep-green gradient slides the colour muddies against
+  // the background, so those fall back to a solid glyph.
+  const w = Math.max(2, Math.round(s*0.10));
+  let stroke = colour;
+  if(!mono){
+    const g = ctx.createLinearGradient(x, y+s, x+s, y);
+    g.addColorStop(0,'#FEDA75'); g.addColorStop(.25,'#FA7E1E');
+    g.addColorStop(.5,'#D62976'); g.addColorStop(.75,'#962FBF');
+    g.addColorStop(1,'#4F5BD5');
+    stroke = g;
+  }
+  ctx.save();
+  ctx.strokeStyle = stroke; ctx.fillStyle = stroke;
+  ctx.lineWidth = w; ctx.lineJoin = 'round';
+  const r = s*0.28, i = w/2;
+  ctx.beginPath();
+  ctx.moveTo(x+r, y+i); ctx.arcTo(x+s-i, y+i, x+s-i, y+s-i, r);
+  ctx.arcTo(x+s-i, y+s-i, x+i, y+s-i, r); ctx.arcTo(x+i, y+s-i, x+i, y+i, r);
+  ctx.arcTo(x+i, y+i, x+s-i, y+i, r); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.215, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s*0.755, y+s*0.245, s*0.058, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+function rail(ctx, surface, type, i, n){
+  const yTop = H - RAIL + 26, yBot = H - 52, prog = (i+1)/n;
+  const path = t => { const x = t*W; return [x, yBot - (yBot-yTop)*Math.pow(t,0.55)]; };
+  const draw = (a,b,col,wd) => {
+    ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.lineCap='round';
+    for(let k=0;k<=200;k++){ const [x,y]=path(a+(b-a)*k/200); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.stroke();
+  };
+  const fill = type==='red_flags' ? P.alert : surface==='photo' ? P.lime : P.brand;
+  draw(0,1, surface==='photo' ? 'rgba(255,255,255,.30)' : 'rgba(0,0,0,.12)', 3);
+  draw(0,prog, fill, 3);
+  const [cx,cy] = path(prog);
+  ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
+
+  // The handle rides in the rail band on every slide. A saved slide travels
+  // without its caption, so the account name has to live inside the image or the
+  // credit is lost the first time someone forwards one.
+  const hf = F(Math.round(W*0.0235), 600);
+  const hk = inkOf(ctx, BRAND.ig, hf);
+  const hcy = H - RAIL + hk.a/2;
+  const gp = Math.round((hk.a + hk.d) * 1.32);
+  drawIG(ctx, M, hcy - gp/2, gp, mut(surface));
+  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'middle';
+  ctx.fillText(BRAND.ig, M + gp + 12, hcy);
+  ctx.textBaseline = 'top';
+}
+
+
+function footer(ctx, slide, surface, type){
+  let y = H - RAIL - 26;
+  if(slide.source_note){
+    ctx.font = F(25,500); ctx.fillStyle = mut(surface); ctx.textBaseline='top';
+    y -= 32; ctx.fillText(slide.source_note, M, y);
+  }
+  if(type==='red_flags' || type==='cta'){
+    ctx.font = F(23,400); ctx.fillStyle = mut(surface);
+    const ls = wrap(ctx, LEGAL, F(23,400), W-2*M);
+    y -= 8 + ls.length*30;
+    let yy = y; for(const l of ls){ ctx.fillText(l, M, yy); yy += 30; }
+  }
+}
+
+/* ---- figures -------------------------------------------------------- */
+function figHeight(fig){
+  if(!fig) return 0;
+  if(fig.type==='scale') return (fig.bands||[]).length*66 + (fig.unit?34:0);
+  const n = (fig.points||[]).length;
+  return n<=3 ? 250 : n*86 + 68;
+}
+
+function drawFigure(ctx, fig, surface, y){
+  if(!fig) return y;
+  if(fig.type==='scale') return figScale(ctx, fig, surface, y);
+  return figTimeline(ctx, fig, surface, y);
+}
+
+function figScale(ctx, fig, surface, y){
+  const bands = fig.bands||[];
+  if(!bands.length) return y;
+  const ramp = (fig.ramp || 'up') !== 'none';
+  const lo = surface==='light'?P.brand:P.mid;
+  ctx.textBaseline='top';
+  if(fig.unit){ ctx.font=F(25,500); ctx.fillStyle=mut(surface);
+    ctx.fillText(fig.unit, M, y-34); }
+
+  // A ramp claims each band is worse than the last. True for bilirubin or scald
+  // temperature; false for a reference range, where it would draw the longest,
+  // most orange bar against the healthiest row. Values, not stages: no bars.
+  if(!ramp){
+    bands.forEach((b,i) => {
+      const cy = y + i*66;
+      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
+      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
+      ctx.fillText(b.label||'', M, cy);
+      const v = String(b.value||'');
+      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
+        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
+    });
+    return y + bands.length*66;
+  }
+
+  // Label column was a fixed 30% of the canvas, so "Smiles, plays, wakes easily"
+  // ran straight under its own bar. Measure the widest label and give it the room
+  // it needs; if that leaves no usable bar, drop to the plain two-column table.
+  ctx.font = F(46,600);
+  const widest = Math.max(...bands.map(b => ctx.measureText(b.label||'').width));
+  const barX = M + Math.min(widest + 34, W*0.52);
+  const barMax = W - M - barX - W*0.17;
+  if(barMax < W*0.12){
+    bands.forEach((b,i) => {
+      const cy = y + i*66;
+      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
+      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
+      ctx.fillText(b.label||'', M, cy);
+      const v = String(b.value||'');
+      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
+        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
+    });
+    return y + bands.length*66;
+  }
+  bands.forEach((b,i) => {
+    const t = i/Math.max(1,bands.length-1);
+    const col = b.alert ? P.alert : mix(lo, P.alert, t);
+    const cy = y + i*66;
+    ctx.font=F(46,600); ctx.fillStyle=ink(surface); ctx.fillText(b.label||'', M, cy);
+    const bw = barMax*(0.34+0.66*t), bh = 28;
+    ctx.fillStyle = col; roundRect(ctx, barX, cy+13, bw, bh, bh/2); ctx.fill();
+    if(b.value){ ctx.font=F(44,500); ctx.fillStyle=mut(surface);
+      ctx.fillText(b.value, barX+bw+20, cy+4); }
+  });
+  return y + bands.length*66;
+}
+
+function figTimeline(ctx, fig, surface, y){
+  const pts = fig.points||[];
+  // Three points earn a horizontal line only if their labels actually fit the
+  // slots. "Three or fewer stays horizontal" was a flat rule, and it shipped
+  // sentence-length labels straight through each other.
+  if(pts.length<=3){
+    ctx.font = F(27,500);
+    const step = (W - 2*M - 20) / Math.max(1, pts.length - 1);
+    const widest = Math.max(...pts.map(p => Math.max(
+      ctx.measureText(p.label||'').width,
+      (ctx.font = F(46,700), ctx.measureText(p.at||'').width))));
+    if(widest <= step * 0.94) return tlH(ctx,pts,surface,y);
+  }
+  return tlV(ctx,pts,surface,y);
+}
+
+function tlH(ctx,pts,surface,y){
+  const x0=M+10, x1=W-M-10, ly=y+90;
+  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(x0,ly); ctx.lineTo(x1,ly); ctx.stroke();
+  ctx.textBaseline='top';
+  pts.forEach((p,i)=>{
+    const px = x0 + (x1-x0)*(i/Math.max(1,pts.length-1));
+    const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
+    ctx.beginPath(); ctx.arc(px,ly,r,0,7); ctx.fillStyle=col; ctx.fill();
+    if(!p.alert){ ctx.beginPath(); ctx.arc(px,ly,r-5,0,7);
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
+    ctx.font=F(46,700); ctx.fillStyle=col;
+    let w = ctx.measureText(p.at||'').width;
+    ctx.fillText(p.at||'', clamp(px-w/2,M,W-M-w), y);
+    if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+      w = ctx.measureText(p.label).width;
+      ctx.fillText(p.label, clamp(px-w/2,M,W-M-w), ly+24); }
+  });
+  return ly+110;
+}
+
+function tlV(ctx,pts,surface,y){
+  const rx = M+13, row = 86;
+  const top = y+row/2, bot = y+row*(pts.length-1)+row/2;
+  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
+  ctx.font=F(46,700);
+  const atW = Math.max(...pts.map(p=>ctx.measureText(p.at||'').width)) + 30;
+  ctx.textBaseline='middle';
+  pts.forEach((p,i)=>{
+    const cy = y + i*row + row/2;
+    const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
+    ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
+    if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
+    ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
+    if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+      ctx.fillText(p.label, rx+34+atW, cy); }
+  });
+  ctx.textBaseline='top';
+  return bot+56;
+}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+function mix(a,b,t){const A=hex(a),B=hex(b);
+  return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;}
+
+/* ---- slides --------------------------------------------------------- */
+const imgCache = {};
+function loadImg(url){
+  if(imgCache[url]) return Promise.resolve(imgCache[url]);
+  return new Promise(res => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => { imgCache[url] = im; res(im); };
+    im.onerror = () => res(null);
+    im.src = url;
+  });
+}
+
+function imageBand(ctx, slide){
+  // A band across the top, never a background. Type over a photograph needs so
+  // much scrim that the picture stops being a picture; in a band both stay
+  // legible as themselves.
+  //
+  // And when a slide carries a figure, the figure IS the visual: a temperature
+  // table teaches more than a photograph of dinner, and both together crush the
+  // text into the footer — that was the slide-2 collision.
+  if(slide.figure) return 0;
+  const src = slide.image && slide.image.url;
+  if(!src) return 0;
+  const im = imgCache[src];
+  if(!im) return 0;
+  const bh = Math.round(H * 0.36);
+  const scale = Math.max(W/im.width, bh/im.height);
+  const sw = im.width*scale, sh = im.height*scale;
+  // Clip to the band. Unclipped, a tall image paints on down the canvas and the
+  // header ends up sitting on the photograph it was meant to sit under.
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, bh); ctx.clip();
+  ctx.drawImage(im, (W-sw)/2, -Math.max(0,(sh-bh)*0.38), sw, sh);
+  ctx.restore();
+  ctx.fillStyle = P.brand; ctx.fillRect(0, bh-6, W, 6);
+  return bh;
+}
+
+function renderSlide(slide, i, n){
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const ctx = c.getContext('2d');
+  const type = slide.type;
+  // The hook carries ten words, so it alone can afford a full-bleed photograph
+  // under a scrim. Slides with body text keep the band: prose over a photo
+  // needs so much darkening that both stop working.
+  const bleed = type==='hook' && slide.image && slide.image.url && imgCache[slide.image.url];
+  const surface = bleed ? 'photo' : SURFACE[type];
+  bg(ctx, surface);
+  let band = 0;
+  if(bleed){
+    const im = imgCache[slide.image.url];
+    const sc = Math.max(W/im.width, H/im.height);
+    ctx.drawImage(im, (W-im.width*sc)/2, (H-im.height*sc)/2, im.width*sc, im.height*sc);
+    let g = ctx.createLinearGradient(0, 0, 0, H*0.30);
+    g.addColorStop(0,'rgba(8,22,15,.72)'); g.addColorStop(1,'rgba(8,22,15,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H*0.30);
+    g = ctx.createLinearGradient(0, H*0.34, 0, H);
+    g.addColorStop(0,'rgba(8,22,15,0)'); g.addColorStop(.45,'rgba(8,22,15,.66)');
+    g.addColorStop(1,'rgba(8,22,15,.9)');
+    ctx.fillStyle = g; ctx.fillRect(0, H*0.34, W, H*0.66);
+  } else {
+    band = imageBand(ctx, slide);
+  }
+  const hy = header(ctx, surface, i, n, band);
+  // red_flags and cta stack source note, legal line and handle in the footer,
+  // so they need more clearance than the rest.
+  const extra = type==='red_flags' ? 74 : type==='cta' ? 34 : 0;
+  const top = hy+52, bot = H - RAIL - 96 - extra, cw = W - 2*M;
+  ctx.textBaseline='top';
+
+  if(type==='hook'){
+    let size=158, lines, lh;
+    do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
+        if(lines.length*lh <= (bot-top)*0.80) break; size-=6; } while(size>62);
+    const totalH = _eyebrowH() + lines.length*lh + 44;
+    let y = surface==='photo'
+      ? Math.max(top + 6, bot - totalH)
+      : top + Math.max(6, (bot - top - totalH) / 2.4);
+    y = eyebrow(ctx, EYEBROW.hook, M, y, surface, type);
+    y = block(ctx, lines, M, y, F(size,800), lh, ink(surface), acc(surface,type));
+    ctx.fillStyle=acc(surface,type); ctx.fillRect(M, y+34, 168, 9);
+  }
+  else if(type==='scene' || type==='common_practice'){
+    const fig = slide.figure, fh = fig ? figHeight(fig)+52 : 0;
+    let size=92, hl, bl, lh, blh=Math.round(48*1.57);
+    while(true){
+      lh = Math.round(size*1.30);
+      hl = wrap(ctx, slide.headline, F(size,800), cw);
+      bl = slide.body ? wrap(ctx, slide.body, F(48,500), cw) : [];
+      const tot = 40 + hl.length*lh + (bl.length?30+bl.length*blh:0) + fh;
+      if(tot <= bot-top || size<=46) break; size-=4;
+    }
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW[type], M, y, surface, type);
+    y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
+    if(bl.length) y = block(ctx, bl, M, y+30, F(48,500), blh, ink(surface), acc(surface,type));
+    if(fig) drawFigure(ctx, fig, surface, y+52);
+  }
+  else if(type==='correction'){
+    const fig = slide.figure;
+    // Without a figure this slide is one sentence, and top-anchoring left the
+    // lower two-thirds blank. Let the type grow into the space and centre what
+    // is left, so the emptiness is margin rather than a hole.
+    const cap = fig ? 0.44 : 0.94;
+    const maxSize = fig ? 104 : 132;
+    let size = maxSize, lines, lh;
+    do { lh = Math.round(size*1.26);
+         lines = wrap(ctx, slide.headline, F(size,800), cw);
+         if(lines.length*lh <= (bot-top)*cap) break; size -= 5; }
+    while(size > 46);
+
+    const figH = fig ? figHeight(fig) + 50 : 0;
+    const totalH = _eyebrowH() + lines.length*lh + figH;
+    let y = top + (fig ? 6 : Math.max(6, (bot - top - totalH) / 2));
+    y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
+    y = block(ctx, lines, M, y, F(size,800), lh, P.gradInk, P.mid);
+    if(fig) drawFigure(ctx, fig, surface, y + 50);
+  }
+  else if(type==='steps'){
+    // The third disease of the day: this branch drew without measuring, so a
+    // three-line bullet ran into the footer. Fit the whole block first —
+    // headline shrinks, then the bullets — exactly as red_flags now does.
+    const col = acc(surface,type), numW=116;
+    let hs=92, bs=46, hl, rows, blh;
+    while(true){
+      blh = Math.round(bs*1.5);
+      hl = wrap(ctx, slide.headline, F(hs,800), cw);
+      rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(bs,500),cw-numW));
+      const total = _eyebrowH() + hl.length*Math.round(hs*1.24) + 46
+                  + rows.reduce((s,r)=>s + r.length*blh + 52, 0);
+      if(total <= (bot-top) || bs <= 34) break;
+      if(hs > 62) hs -= 4; else bs -= 2;
+    }
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.steps, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(hs,800), Math.round(hs*1.24), ink(surface), col);
+    y += 46;
+    rows.forEach((r,i)=>{
+      const rh = r.length*blh;
+      ctx.font=F(Math.round(bs*2.85),700); ctx.fillStyle=col; ctx.textBaseline='middle';
+      ctx.fillText(String(i+1), M-4, y+rh/2-6);
+      ctx.textBaseline='top';
+      block(ctx, r, M+numW, y, F(bs,500), blh, ink(surface), col);
+      y += rh + 52;
+      if(i<rows.length-1){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M+numW,y-28); ctx.lineTo(W-M,y-28); ctx.stroke(); }
+    });
+  }
+  else if(type==='red_flags'){
+    // Four long bullets used to run straight into the legal line: this branch
+    // never learned to shrink. Fit the whole block before drawing any of it.
+    const col=P.alert, rw=7, gap=32;
+    let hs=92, bs=46, hl, rows, blh;
+    while(true){
+      blh = Math.round(bs*1.5);
+      hl = wrap(ctx, slide.headline, F(hs,800), cw);
+      rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(bs,500),cw-rw-gap));
+      const total = _eyebrowH() + hl.length*Math.round(hs*1.24) + 40
+                  + rows.reduce((s,r)=>s + r.length*blh + 34, 0);
+      if(total <= (bot-top) || bs <= 34) break;
+      if(hs > 62) hs -= 4; else bs -= 2;
+    }
+    let y = top+6;
+    y = eyebrow(ctx, EYEBROW.red_flags, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(hs,800), Math.round(hs*1.24), ink(surface), col);
+    y += 40;
+    const fieldTop = y-34;
+    const start = y;
+    rows.forEach(r=>{
+      const rh = r.length*blh;
+      ctx.fillStyle=col; roundRect(ctx, 0, y+6, rw+26, rh-10, rw); ctx.fill();
+      block(ctx, r, M+rw+gap, y, F(bs,500), blh, ink(surface), col);
+      y += rh + 34;
+    });
+    // whole slide is the alert surface; no tint needed
+  }
+  else if(type==='cta'){
+    // Measure the whole group, then centre it. Bottom-anchoring the lockup only
+    // moved the dead space above it; a short headline left a hole. Spacing is
+    // now fixed between the parts and the slack goes to the outside.
+    const blh = Math.round(48*1.5);
+    let fhs = 92, hl;
+    do { hl = wrap(ctx, slide.headline, F(fhs,800), cw);
+         if(hl.length*Math.round(fhs*1.24) < (bot-top)*0.44) break; fhs -= 4; }
+    while(fhs > 56);
+    const lh2 = Math.round(fhs*1.24);
+    const sl = wrap(ctx, slide.subheadline||'', F(48,500), cw);
+    const mp2 = 74;
+
+    // With an image band above, the region may not hold the sign-off lockup as
+    // well. The lockup is redundant branding then — the header already carries
+    // the logo and name, the footer the legal line and handle — so it yields.
+    const withLock = _eyebrowH() + hl.length*lh2 + 20 + 5 + 40
+                   + sl.length*blh + 78 + mp2;
+    const showLock = withLock <= (bot - top);
+    const groupH = showLock ? withLock
+                 : _eyebrowH() + hl.length*lh2 + 20 + 5 + 40 + sl.length*blh;
+    let y = top + Math.max(6, (bot - top - groupH) / 2);
+
+    y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
+    y = block(ctx, hl, M, y, F(fhs,800), lh2, P.gradInk, P.brand);
+    ctx.fillStyle = P.brand; ctx.fillRect(M, y+20, 120, 5);
+    y = block(ctx, sl, M, y+40, F(48,500), blh, P.gradMut, P.brand);
+
+    // The rule sat only 26px above a block that is centred on the logo, so the
+    // ascender of "Aria Healthcare" crossed it. Give the lockup real clearance.
+    ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M, y+24); ctx.lineTo(W-M, y+24); ctx.stroke();
+    if(!showLock){ footer(ctx, slide, surface, type); rail(ctx, surface, type, i, n); return c; }
+    const ly = y + 78;
+    let x2 = M;
+    if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
+    else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();
+      ctx.fillStyle=P.paper; ctx.font=F(34,800); ctx.textAlign='center';
+      ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x2+mp2/2,ly+mp2/2);
+      ctx.textAlign='left'; ctx.textBaseline='top'; x2 += mp2 + 20; }
+
+    stackCentred(ctx, [
+      { txt: BRAND.name,    font: F(36,700), fill: P.gradInk },
+      { txt: BRAND.tagline, font: F(27,500), fill: P.gradMut },
+      { txt: BRAND.site,    font: F(27,500), fill: P.gradMut },
+    ], x2, ly + mp2/2, 11);
+  }
+
+  footer(ctx, slide, surface, type);
+  rail(ctx, surface, type, i, n);
+  return c;
+}
+
+
+/* ---- app ------------------------------------------------------------ */
+const REQ = ['hook','scene','common_practice','correction','steps','red_flags','cta'];
+const IMG_API = 'https://img.ariahealthcare.in';
+let DOC = null, saved = new Set(), imgURL = {};
+
+// Any generator, any device. She makes a picture wherever she likes — Gemini on
+// her phone, or a photo she took herself — and drops it straight in. No URL, no
+// hosting, no API quota to run out of.
+function pickImage(i){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = async e => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const url = URL.createObjectURL(f);
+    await loadImg(url);
+    DOC.slides[i].image = { kind: 'photo', url };
+    redraw();
+  };
+  inp.click();
+}
+
+async function autoFill(){
+  // The carousel arrives with each picture's *subject* already decided by
+  // Claude; the pictures themselves are made here, automatically, the moment
+  // she opens it. She does nothing. "Make a picture" remains as the veto —
+  // tap it to get a different one.
+  for(let i = 0; i < DOC.slides.length; i++){
+    const s = DOC.slides[i];
+    if(!(s.image && s.image.subject) || (s.image && s.image.url)) continue;
+    const card = document.querySelectorAll('#out .slide')[i];
+    const btn = card && card.querySelector('.genimg');
+    if(btn){ btn.textContent = 'Making the picture…'; btn.disabled = true; }
+    try{
+      const r = await fetch(IMG_API + '/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: s.image.kind || 'photo',
+                               subject: s.image.subject }),
+      });
+      const out = await r.json();
+      if(r.ok && out.url){
+        await loadImg(out.url);
+        s.image.url = out.url;
+        s.image_subject = s.image.subject;
+        redraw();
+      } else if(btn){
+        // Shown on the button, not hidden: she should know a picture is
+        // missing and why, and be able to just tap to retry.
+        btn.textContent = 'Picture failed — tap to retry';
+      }
+    }catch(_){
+      if(btn) btn.textContent = 'Picture failed — tap to retry';
+    }
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function makeImage(i, btn){
+  // She is never asked to write an image prompt. The slide says what it is
+  // about: use the subject Claude put in the carousel if there is one,
+  // otherwise ask the Worker to propose one from the slide text. Her control
+  // is the veto — "New picture" offers the used subject for editing.
+  const s = DOC.slides[i];
+  const label = btn.textContent;
+  btn.textContent = 'Making…'; btn.disabled = true;
+  try{
+    let subject = (s.image && s.image.subject) || s.image_subject || '';
+    let kind = (s.image && s.image.kind)
+             || (s.type === 'scene' ? 'illustration' : 'photo');
+
+    if(s.image_subject && s.image && s.image.url){
+      // A picture already exists: this tap means "different one". Offer the
+      // subject for editing rather than regenerating the same thing blind.
+      const edited = window.prompt('The picture will show:', subject);
+      if(edited === null){ btn.textContent = label; btn.disabled = false; return; }
+      if(edited.trim()) subject = edited.trim();
+    }
+
+    if(!subject){
+      // Normally the carousel arrives with the subject already decided. This
+      // path is the fallback — and the fallback has its own fallback, because
+      // Google refuses the text model from some Cloudflare locations
+      // ("user location is not supported") while happily serving the image
+      // model. If the machine cannot propose, ask her rather than dead-ending.
+      try{
+        const r = await fetch(IMG_API + '/suggest', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            topic: DOC.topic || '',
+            slide: { type: s.type, headline: s.headline || '', body: s.body || '' },
+          }),
+        });
+        const out = await r.json();
+        if(r.ok && out.subject){ subject = out.subject; kind = out.kind || kind; }
+      }catch(_){}
+      if(!subject){
+        const typed = window.prompt(
+          'What should the picture show? Name the object or the moment.\n' +
+          'For example: a digital thermometer beside a toy on a bedsheet');
+        if(!typed || !typed.trim()){ btn.textContent = label; btn.disabled = false; return; }
+        subject = typed.trim();
+      }
+    }
+
+    const r2 = await fetch(IMG_API + '/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind, subject }),
+    });
+    const out2 = await r2.json();
+    if(!r2.ok || !out2.url) throw new Error(out2.error || 'Could not make the picture.');
+    await loadImg(out2.url);
+    s.image = { kind, url: out2.url, subject };
+    s.image_subject = subject;
+    redraw();
+  }catch(e){
+    $('#err').textContent = e.message;
+    show($('#err'), true);
+    $('#err').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  btn.textContent = s.image && s.image.url ? 'New picture' : label;
+  btn.disabled = false;
+}
+
+function redraw(){
+  const cards = document.querySelectorAll('#out .slide');
+  DOC.slides.forEach((s, i) => {
+    const u = renderSlide(s, i, DOC.slides.length).toDataURL('image/png');
+    imgURL[i] = u;
+    const im = cards[i] && cards[i].querySelector('img');
+    if(im) im.src = u;
+    const b = cards[i] && cards[i].querySelector('.genimg');
+    if(b) b.textContent = s.image ? 'New picture' : 'Make a picture';
+  });
+}
+
+const show = (el,on) => el.classList.toggle('hidden', !on);
+
+function parse(raw){
+  const t = String(raw||'').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Copy the whole block Claude sent, including the first { and the last }.');
+  let doc;
+  try { doc = JSON.parse(t.slice(a, b+1)); }
+  catch(_) { throw new Error('Some of the carousel is missing. Go back to Claude, tap copy on the whole block, and try again.'); }
+  if(!Array.isArray(doc.slides)) throw new Error('No slides in that. Copy the block Claude sent, not the message around it.');
+  if(doc.slides.map(s=>s.type).join(',') !== REQ.join(','))
+    throw new Error('The slides are out of order. Ask Claude to send the carousel again.');
+  return doc;
+}
+
+async function build(raw){
+  const err = $('#err'); show(err,false);
+  let doc;
+  try { doc = parse(raw); }
+  catch(ex){ err.textContent = ex.message; show(err,true); return; }
+  DOC = doc; saved.clear();
+
+  try{ await document.fonts.load('800 100px Mukta');
+       await document.fonts.load('500 48px Mukta'); }catch(_){}
+  if(logo === null) logo = await tryLogo();
+
+  const sl = $('#srclist'); sl.innerHTML = '';
+  if(doc.sources && doc.sources.length){
+    doc.sources.forEach(s=>{
+      const li=document.createElement('li');
+      li.innerHTML = `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`
+        + (s.accessed ? `<div class="acc">checked ${esc(s.accessed)}</div>` : '');
+      sl.appendChild(li);
+    });
+    show($('#srcbox'),true);
+  } else show($('#srcbox'),false);
+
+  if(doc.guideline_conflict){
+    $('#diverge').innerHTML = '<b>Where guidance disagrees</b>' + esc(doc.guideline_conflict);
+    show($('#diverge'),true);
+  } else show($('#diverge'),false);
+
+  await Promise.all(doc.slides
+    .filter(s => s.image && s.image.url)
+    .map(s => loadImg(s.image.url)));
+
+  const out = $('#out'); out.innerHTML='';
+  doc.slides.forEach((s,i)=>{
+    const url = renderSlide(s,i,doc.slides.length).toDataURL('image/png');
+    const d = document.createElement('div'); d.className='slide';
+    const hasImg = !!(s.image && s.image.url);
+    const canImg = ['scene','common_practice','hook','cta'].includes(s.type) && !s.figure;
+    d.innerHTML = `<img src="${url}" alt="${esc((doc.alt_text&&doc.alt_text[i])||('Slide '+(i+1)))}">`
+      + `<div class="bar"><span class="n">${i+1} of ${doc.slides.length}</span>`
+      + (canImg ? `<button class="genimg" data-i="${i}">${hasImg?'New picture':'Make a picture'}</button>`
+                + `<button class="addimg" data-i="${i}">Use my own</button>` : '')
+      + `<button data-i="${i}">Save slide ${i+1}</button></div>`;
+    const btns = d.querySelectorAll('button');
+    btns[btns.length-1].onclick = () => saveSlide(i, imgURL[i] || url, d);
+    if(canImg){
+      d.querySelector('.addimg').onclick = () => pickImage(i);
+      d.querySelector('.genimg').onclick = e => makeImage(i, e.target);
+    }
+    out.appendChild(d);
+  });
+
+  $('#capbox').textContent = caption(doc);
+  $('#gate').checked = false; gate();
+  autoFill();
+  show($('#stage'),true);
+  $('#dock').classList.add('on');
+  $('#stage').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function saveSlide(i, url, card){
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${slug(DOC.topic)}-${String(i+1).padStart(2,'0')}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+  saved.add(i); card.classList.add('saved');
+  card.querySelector('button').textContent = `Saved ${i+1}`;
+  count();
+}
+
+function count(){
+  const n = saved.size, t = DOC ? DOC.slides.length : 7;
+  $('#count').innerHTML = `<b>${n}</b> of ${t} saved`;
+}
+
+function gate(){
+  const on = $('#gate').checked;
+  $('#out').classList.toggle('locked', !on);
+  $('#gatebox').classList.toggle('on', on);
+}
+$('#gate').onchange = gate;
+
+const slug = t => String(t||'carousel').toLowerCase()
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48) || 'carousel';
+const esc = t => String(t).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function caption(doc){
+  const L=[doc.caption||'',''];
+  if(doc.sources&&doc.sources.length){ L.push('Sources');
+    doc.sources.forEach(s=>L.push('  · '+s.name+' — '+s.url)); L.push(''); }
+  if(doc.hashtags) L.push(doc.hashtags.join(' '),'');
+  if(doc.alt_text){ L.push('ALT TEXT (paste per slide when uploading)');
+    doc.alt_text.forEach((a,i)=>L.push('  '+(i+1)+'. '+a)); }
+  return L.join('\n');
+}
+
+/* type a topic, get a carousel — as a job that survives app switches */
+function jobUI(on, label){
+  const b = $('#gen');
+  b.disabled = on;
+  b.textContent = on
+    ? (label || 'Writing… you can switch apps, it will be here when you return')
+    : 'Generate the carousel';
+}
+
+async function pollJob(id, kind){
+  // The phone may suspend this page at any moment. The job runs on the server
+  // regardless; this loop just asks after it whenever the page is awake, and
+  // the id in localStorage lets a killed page pick the answer up on reopen.
+  localStorage.setItem('aria_job', JSON.stringify({ id, kind }));
+  jobUI(true);
+  const started = Date.now();
+  while(Date.now() - started < 6 * 60 * 1000){
+    let out = null;
+    try{
+      const r = await fetch(IMG_API + '/job/' + id);
+      out = await r.json();
+    }catch(_){ /* offline for a moment; keep trying */ }
+    if(out && out.status === 'done'){
+      localStorage.removeItem('aria_job');
+      jobUI(false);
+      await build(JSON.stringify(out.doc));
+      return;
+    }
+    if(out && (out.status === 'error' || out.status === 'unknown')){
+      localStorage.removeItem('aria_job');
+      jobUI(false);
+      $('#generr').textContent = out.error || 'That took too long. Please try again.';
+      show($('#generr'), true);
+      return;
+    }
+    await new Promise(res => setTimeout(res, 4000));
+  }
+  localStorage.removeItem('aria_job');
+  jobUI(false);
+  $('#generr').textContent = 'That took too long. Please try again.';
+  show($('#generr'), true);
+}
+
+async function startJob(path, body, kind){
+  const err = $('#generr'); show(err,false); show($('#err'),false);
+  try{
+    const r = await fetch(IMG_API + path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const out = await r.json();
+    if(!r.ok || !out.job) throw new Error(out.error || 'The writer did not answer.');
+    await pollJob(out.job, kind);
+  }catch(e){
+    jobUI(false);
+    err.textContent = e.message; show(err,true);
+    err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+$('#gen').onclick = () => {
+  const topic = $('#topic').value.trim();
+  if(!topic){ $('#topic').focus(); return; }
+  startJob('/carousel',
+    { topic, department: $('#dept').value, brand: 'aria' }, 'carousel');
+};
+
+// the department list is the Worker's, not the page's — one catalogue,
+// read by every surface that will ever exist
+(async () => {
+  try{
+    const r = await fetch(IMG_API + '/health');
+    const out = await r.json();
+    if(out.departments){
+      const sel = $('#dept');
+      sel.innerHTML = Object.entries(out.departments)
+        .map(([k,v]) => `<option value="${k}"${k==='paediatrics'?' selected':''}>${v}</option>`)
+        .join('');
+    }
+  }catch(_){ /* the hardcoded default stands */ }
+})();
+
+// a page reopened mid-job resumes it instead of forgetting it
+(function resume(){
+  let j = null;
+  try{ j = JSON.parse(localStorage.getItem('aria_job') || 'null'); }catch(_){}
+  if(j && j.id) pollJob(j.id, j.kind);
+})();
+document.addEventListener('visibilitychange', () => {
+  // returning to the page checks immediately rather than waiting out the timer
+});
+
+/* chat bar: every change goes through the same door */
+async function sendChange(){
+  const box = $('#chat'), btn = $('#send');
+  const instruction = box.value.trim();
+  if(!instruction || !DOC) return;
+  btn.disabled = true; box.disabled = true; btn.textContent = 'Working…';
+  try{
+    const r = await fetch(IMG_API + '/revise', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ doc: DOC, instruction, department: $('#dept').value, brand: 'aria' }),
+    });
+    const out = await r.json();
+    if(!r.ok || !out.job) throw new Error(out.error || 'The writer did not answer.');
+    box.value = '';
+    btn.textContent = 'Working… feel free to switch apps';
+    await pollJob(out.job, 'revise');
+  }catch(e){
+    $('#err').textContent = e.message; show($('#err'), true);
+  }
+  btn.disabled = false; box.disabled = false; btn.textContent = 'Send';
+}
+$('#send').onclick = sendChange;
+$('#chat').addEventListener('keydown', e => { if(e.key === 'Enter') sendChange(); });
+
+/* open the downloaded file — the path that needs no permissions at all */
+$('#pick').onclick = () => $('#file').click();
+$('#file').onchange = async e => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const b = $('#pick');
+  b.textContent = 'Reading the file…'; b.disabled = true;
+  try { await build(await f.text()); }
+  catch(_){
+    $('#err').textContent = 'That file could not be read. Try the paste option below.';
+    show($('#err'), true);
+  }
+  b.disabled = false; b.textContent = 'Open the file Claude sent';
+  e.target.value = '';
+};
+
+/* one-tap paste */
+$('#paste').onclick = async () => {
+  const b=$('#paste'), err=$('#err'); show(err,false);
+  b.textContent='Reading clipboard…'; b.disabled=true;
+  let text='';
+  try{ text = await navigator.clipboard.readText(); }
+  catch(_){
+    b.disabled=false; b.textContent='Paste the carousel';
+    err.innerHTML = 'Your browser would not let me read the clipboard. '
+      + 'Tap <b>or paste it in the box</b> below and press and hold in the box instead.';
+    show(err,true); show($('#src'),true); show($('#load'),true); $('#src').focus();
+    return;
+  }
+  b.textContent='Drawing the slides…';
+  await build(text);
+  b.disabled=false; b.textContent='Paste the carousel';
+};
+
+$('#manual').onclick = () => {
+  show($('#src'),true); show($('#load'),true);
+  $('#manual').classList.add('hidden'); $('#src').focus();
+};
+$('#load').onclick = async () => {
+  $('#load').disabled=true; $('#load').textContent='Drawing the slides…';
+  await build($('#src').value);
+  $('#load').disabled=false; $('#load').textContent='Show me the slides';
+};
+
+async function copyCap(btn){
+  try{ await navigator.clipboard.writeText($('#capbox').textContent);
+       btn.textContent='Caption copied'; }
+  catch(_){ btn.textContent='Select the caption and copy it'; }
+  setTimeout(()=>btn.textContent='Copy caption',2200);
+}
+$('#copycap').onclick = e => copyCap(e.target);
+$('#dockcap').onclick = e => copyCap(e.target);
+</script>
+</body>
+</html>

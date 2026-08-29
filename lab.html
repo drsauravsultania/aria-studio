@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-10</span>
+  <span style="opacity:.55">Aria Lab v20260829-11</span>
 </div>
 
 <div class="dock" id="dock">
@@ -267,7 +267,7 @@ const BRAND = {
   ig:'@drsonaliped_ariahealthcare',
   reg:'Reg. No. 202/2035000530', mark:'A'
 };
-const LEGAL = 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
+const LEGAL = () => 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
 
 const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
   common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',
@@ -369,7 +369,11 @@ function header(ctx, surface, i, n, band){
     ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
     ctx.fillStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
     ctx.font = F(29,800); ctx.textBaseline='middle'; ctx.textAlign='center';
-    ctx.fillText(BRAND.mark, x+mp/2, y+mp/2);
+    { const _m = ctx.measureText(BRAND.mark);
+      ctx.textBaseline='alphabetic';
+      ctx.fillText(BRAND.mark, x+mp/2,
+        y + mp/2 + (_m.actualBoundingBoxAscent - _m.actualBoundingBoxDescent)/2);
+      ctx.textBaseline='top'; }
     ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
   }
   stackCentred(ctx, [
@@ -488,7 +492,7 @@ function footer(ctx, slide, surface, type){
   }
   if(type==='red_flags' || type==='cta'){
     ctx.font = F(23,400); ctx.fillStyle = mut(surface);
-    const ls = wrap(ctx, LEGAL, F(23,400), W-2*M);
+    const ls = wrap(ctx, LEGAL(), F(23,400), W-2*M);
     y -= 8 + ls.length*30;
     let yy = y; for(const l of ls){ ctx.fillText(l, M, yy); yy += 30; }
   }
@@ -845,7 +849,11 @@ function renderSlide(slide, i, n){
     if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
     else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();
       ctx.fillStyle=P.paper; ctx.font=F(34,800); ctx.textAlign='center';
-      ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x2+mp2/2,ly+mp2/2);
+      ctx.textBaseline='middle'; { const _m2 = ctx.measureText(BRAND.mark);
+      ctx.textBaseline='alphabetic';
+      ctx.fillText(BRAND.mark, x2+mp2/2,
+        ly + mp2/2 + (_m2.actualBoundingBoxAscent - _m2.actualBoundingBoxDescent)/2);
+      ctx.textBaseline='top'; }
       ctx.textAlign='left'; ctx.textBaseline='top'; x2 += mp2 + 20; }
 
     stackCentred(ctx, [
@@ -1196,6 +1204,8 @@ $('#gen').onclick = () => {
         // brand before anything renders; personal mode drops the logo and the
         // institutional lockup entirely.
         BRAND.ig = BRAND_INFO.handle || BRAND.ig;
+        // A personal brand must never wear the hospital's registration.
+        BRAND.reg = BRAND_INFO.reg || '';
         if(BRAND_INFO.site) BRAND.site = BRAND_INFO.site;
         if(BRAND_INFO.brandMode === 'personal'){
           BRAND.name = BRAND_INFO.name;

@@ -264,17 +264,38 @@ const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : P.brand;
 const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
 
 function wrap(ctx, text, font, maxW){
+  // Tag every word as accent or plain, wrap on words, then re-emit the braces per
+  // line. Matching "{...}" as one token made a multi-word run unbreakable, and
+  // tracking a single open flag let the run swallow the word before it.
   ctx.font = font;
-  const clean = t => t.replace(/[{}]/g,'');
-  const toks = text.match(/\{[^}]+\}\S*|\S+/g) || [];
-  const lines = []; let cur = [];
-  for(const t of toks){
-    const trial = cur.concat(t).join(' ');
-    if(ctx.measureText(clean(trial)).width <= maxW || !cur.length) cur.push(t);
-    else { lines.push(cur.join(' ')); cur = [t]; }
+  const words = [];
+  let accent = false;
+  for(let raw of (text || '').split(/\s+/).filter(Boolean)){
+    const opens = raw.includes('{'), closes = raw.includes('}');
+    if(opens) accent = true;
+    words.push({ w: raw.replace(/[{}]/g, ''), a: accent });
+    if(closes) accent = false;
   }
-  if(cur.length) lines.push(cur.join(' '));
-  return lines;
+  const emit = ws => {
+    let out = '', run = false;
+    ws.forEach((x, i) => {
+      if(x.a && !run){ out += (i ? ' ' : '') + '{' + x.w; run = true; }
+      else if(!x.a && run){ out += '}' + (i ? ' ' : '') + x.w; run = false; }
+      else out += (i ? ' ' : '') + x.w;
+    });
+    return out + (run ? '}' : '');
+  };
+  const lines = [];
+  let cur = [];
+  for(const x of words){
+    const trial = cur.concat(x).map(k => k.w).join(' ');
+    if(ctx.measureText(trial).width > maxW && cur.length){
+      lines.push(emit(cur)); cur = [];
+    }
+    cur.push(x);
+  }
+  if(cur.length) lines.push(emit(cur));
+  return lines.length ? lines : [''];
 }
 
 function drawLine(ctx, line, x, y, font, colour, accent){
@@ -487,8 +508,26 @@ function figScale(ctx, fig, surface, y){
     return y + bands.length*66;
   }
 
-  const labelW = W*0.30, barX = M+labelW;
+  // Label column was a fixed 30% of the canvas, so "Smiles, plays, wakes easily"
+  // ran straight under its own bar. Measure the widest label and give it the room
+  // it needs; if that leaves no usable bar, drop to the plain two-column table.
+  ctx.font = F(46,600);
+  const widest = Math.max(...bands.map(b => ctx.measureText(b.label||'').width));
+  const barX = M + Math.min(widest + 34, W*0.52);
   const barMax = W - M - barX - W*0.17;
+  if(barMax < W*0.12){
+    bands.forEach((b,i) => {
+      const cy = y + i*66;
+      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
+      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
+      ctx.fillText(b.label||'', M, cy);
+      const v = String(b.value||'');
+      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
+        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
+    });
+    return y + bands.length*66;
+  }
   bands.forEach((b,i) => {
     const t = i/Math.max(1,bands.length-1);
     const col = b.alert ? P.alert : mix(lo, P.alert, t);
@@ -683,7 +722,7 @@ function renderSlide(slide, i, n){
     const mp2 = 74;
 
     const groupH = _eyebrowH() + hl.length*lh2 + 20 + 5 + 40
-                 + sl.length*blh + 46 + mp2;
+                 + sl.length*blh + 78 + mp2;
     let y = top + Math.max(6, (bot - top - groupH) / 2);
 
     y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
@@ -691,9 +730,11 @@ function renderSlide(slide, i, n){
     ctx.fillStyle = P.brand; ctx.fillRect(M, y+20, 120, 5);
     y = block(ctx, sl, M, y+40, F(48,500), blh, P.gradMut, P.brand);
 
-    const ly = y + 46;
+    // The rule sat only 26px above a block that is centred on the logo, so the
+    // ascender of "Aria Healthcare" crossed it. Give the lockup real clearance.
     ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(M, y+20); ctx.lineTo(W-M, y+20); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(M, y+24); ctx.lineTo(W-M, y+24); ctx.stroke();
+    const ly = y + 78;
     let x2 = M;
     if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
     else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();

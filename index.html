@@ -223,6 +223,7 @@ const BRAND = {
   name:'Aria Healthcare', tagline:'Founded on Faith',
   credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
   site:'ariahealthcare.in', wa:'WhatsApp +91 62052 54330',
+  ig:'@drsonaliped_ariahealthcare',
   reg:'Reg. No. 202/2035000530', mark:'A'
 };
 const LEGAL = 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
@@ -347,6 +348,14 @@ function rail(ctx, surface, type, i, n){
   const [cx,cy] = path(prog);
   ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
 }
+  // The handle rides in the rail band on every slide. A saved slide travels
+  // without its caption, so the account name has to live inside the image or the
+  // credit is lost the first time someone forwards one.
+  ctx.font = F(Math.round(W*0.0235), 600);
+  ctx.fillStyle = mut(surface);
+  ctx.textBaseline = 'top';
+  ctx.fillText(BRAND.ig, M, H - RAIL - 2);
+
 
 function footer(ctx, slide, surface, type){
   let y = H - RAIL - 26;
@@ -478,7 +487,10 @@ function renderSlide(slide, i, n){
   const type = slide.type, surface = SURFACE[type];
   bg(ctx, surface);
   const hy = header(ctx, surface, i, n);
-  const top = hy+52, bot = H - RAIL - 96, cw = W - 2*M;
+  // red_flags and cta stack source note, legal line and handle in the footer,
+  // so they need more clearance than the rest.
+  const extra = (type==='red_flags'||type==='cta') ? 74 : 0;
+  const top = hy+52, bot = H - RAIL - 96 - extra, cw = W - 2*M;
   ctx.textBaseline='top';
 
   if(type==='hook'){
@@ -694,7 +706,7 @@ $('#paste').onclick = async () => {
   catch(_){
     b.disabled=false; b.textContent='Paste the carousel';
     err.innerHTML = 'Your browser would not let me read the clipboard. '
-      + 'Tap <b>or paste it in the box</b> below, then press and hold in the box and choose Paste.';
+      + 'Tap <b>or paste it in the box</b> below and press and hold in the box instead.';
     show(err,true); show($('#src'),true); show($('#load'),true); $('#src').focus();
     return;
   }

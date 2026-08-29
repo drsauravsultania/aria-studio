@@ -215,7 +215,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Studio v20260829-5</span>
+  <span style="opacity:.55">Studio v20260829-6</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1121,24 +1121,39 @@ async function runTicketed(path, body){
   body.ticket = ticket;
   localStorage.setItem('aria_job', JSON.stringify({ path, body, t: Date.now() }));
   jobUI(true);
+  // A silent long wait is indistinguishable from a hang. Count the seconds on
+  // the button, and cut the cord at three minutes rather than forever.
+  const t0 = Date.now();
+  const tick = setInterval(() => {
+    const b = $('#gen');
+    if(b.disabled) b.textContent =
+      'Writing… ' + Math.round((Date.now()-t0)/1000) + 's — you can switch apps';
+  }, 1000);
+  const ctl = new AbortController();
+  const cut = setTimeout(() => ctl.abort(), 180000);
   try{
     const r = await fetch(IMG_API + path, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
+      signal: ctl.signal,
     });
     const out = await r.json();
     if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
+    clearInterval(tick); clearTimeout(cut);
     localStorage.removeItem('aria_job');
     jobUI(false);
     await build(JSON.stringify(out.doc));
   }catch(e){
+    clearInterval(tick); clearTimeout(cut);
     // A failed ticket must be torn up, or every page load resumes the doomed
     // job and holds the button hostage — which is exactly what "stuck on both
     // pages" looked like.
     localStorage.removeItem('aria_job');
     jobUI(false);
-    $('#generr').textContent = e.message + ' — tap Generate to try again.';
+    $('#generr').textContent = (e.name === 'AbortError'
+      ? 'The writer took over three minutes and was cut off.'
+      : e.message) + ' — tap Generate to try again.';
     show($('#generr'), true);
   }
 }

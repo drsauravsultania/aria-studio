@@ -558,7 +558,17 @@ function figScale(ctx, fig, surface, y){
 
 function figTimeline(ctx, fig, surface, y){
   const pts = fig.points||[];
-  if(pts.length<=3) return tlH(ctx,pts,surface,y);
+  // Three points earn a horizontal line only if their labels actually fit the
+  // slots. "Three or fewer stays horizontal" was a flat rule, and it shipped
+  // sentence-length labels straight through each other.
+  if(pts.length<=3){
+    ctx.font = F(27,500);
+    const step = (W - 2*M - 20) / Math.max(1, pts.length - 1);
+    const widest = Math.max(...pts.map(p => Math.max(
+      ctx.measureText(p.label||'').width,
+      (ctx.font = F(46,700), ctx.measureText(p.at||'').width))));
+    if(widest <= step * 0.94) return tlH(ctx,pts,surface,y);
+  }
   return tlV(ctx,pts,surface,y);
 }
 
@@ -748,19 +758,29 @@ function renderSlide(slide, i, n){
     });
   }
   else if(type==='red_flags'){
-    const col=P.alert, rw=7, gap=32, blh=Math.round(46*1.57);
-    const hl = wrap(ctx, slide.headline, F(92,800), cw);
-    const rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(46,500),cw-rw-gap));
+    // Four long bullets used to run straight into the legal line: this branch
+    // never learned to shrink. Fit the whole block before drawing any of it.
+    const col=P.alert, rw=7, gap=32;
+    let hs=92, bs=46, hl, rows, blh;
+    while(true){
+      blh = Math.round(bs*1.5);
+      hl = wrap(ctx, slide.headline, F(hs,800), cw);
+      rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(bs,500),cw-rw-gap));
+      const total = _eyebrowH() + hl.length*Math.round(hs*1.24) + 40
+                  + rows.reduce((s,r)=>s + r.length*blh + 34, 0);
+      if(total <= (bot-top) || bs <= 34) break;
+      if(hs > 62) hs -= 4; else bs -= 2;
+    }
     let y = top+6;
     y = eyebrow(ctx, EYEBROW.red_flags, M, y, surface, type);
-    y = block(ctx, hl, M, y, F(92,800), 120, ink(surface), col);
+    y = block(ctx, hl, M, y, F(hs,800), Math.round(hs*1.24), ink(surface), col);
     y += 40;
     const fieldTop = y-34;
     const start = y;
     rows.forEach(r=>{
       const rh = r.length*blh;
       ctx.fillStyle=col; roundRect(ctx, 0, y+6, rw+26, rh-10, rw); ctx.fill();
-      block(ctx, r, M+rw+gap, y, F(46,500), blh, ink(surface), col);
+      block(ctx, r, M+rw+gap, y, F(bs,500), blh, ink(surface), col);
       y += rh + 34;
     });
     // whole slide is the alert surface; no tint needed

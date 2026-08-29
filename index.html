@@ -150,10 +150,13 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <!-- 2 -->
   <div class="card" id="c2">
     <p class="eyebrow"><i>2</i> Bring it here</p>
-    <h3>Paste what Claude sent</h3>
-    <p id="p2">One tap, once you have copied the card. Your phone may ask
-       permission to read the clipboard — say yes.</p>
-    <button id="paste">Paste the carousel</button>
+    <h3>Open what Claude sent</h3>
+    <p id="p2">Tap <b>Download</b> on the card Claude sent, then open that file
+       here. It will be in your Downloads.</p>
+    <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
+    <button id="pick">Open the file Claude sent</button>
+    <div class="gap"></div>
+    <button class="ghost" id="paste">Or paste it instead</button>
     <div class="gap"></div>
     <button class="quiet" id="manual">or paste it in the box</button>
     <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
@@ -197,7 +200,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <b>Aria Healthcare</b> — a children's hospital in Deoghar.<br>
   Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
   OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
-  <a href="https://wa.me/916205254330">WhatsApp +91 62052 54330</a> ·
+  <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010
 </div>
@@ -215,14 +218,16 @@ const $ = s => document.querySelector(s);
 const escapeHtml = t => String(t).replace(/[&<>"']/g,
   c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
-           paper:'#F6F3EC', ink:'#10201A', mut:'#646C64', rule:'#D6D0C3',
-           dark:'#0E1C16', darkInk:'#F6F3EC', darkMut:'#A4B2A8', gradInk:'#CBE8D6'};
+           paper:'#F6F3EC', ink:'#10201A', mut:'#686C68', rule:'#DED8CB',
+           dark:'#E3F0E7', darkInk:'#0E281B', darkMut:'#627C6C', darkRule:'#C6DBCD',
+           alertBg:'#FDF0E0', alertInk:'#3A220A', alertMut:'#8C6A42',
+           alertRule:'#F0D6B4', gradInk:'#CBE8D6'};
 const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
 
 const BRAND = {
   name:'Aria Healthcare', tagline:'Founded on Faith',
   credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
-  site:'ariahealthcare.in', wa:'WhatsApp +91 62052 54330',
+  site:'ariahealthcare.in', 
   ig:'@drsonaliped_ariahealthcare',
   reg:'Reg. No. 202/2035000530', mark:'A'
 };
@@ -232,7 +237,7 @@ const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
   common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',
   steps:'WHAT TO DO INSTEAD', red_flags:'SEEK CARE TODAY', cta:'IN SHORT'};
 const SURFACE = {hook:'light', scene:'dark', common_practice:'light',
-  correction:'grad', steps:'light', red_flags:'dark', cta:'grad'};
+  correction:'grad', steps:'light', red_flags:'alertbg', cta:'grad'};
 
 let logo = null;
 const tryLogo = () => new Promise(res => {
@@ -241,11 +246,11 @@ const tryLogo = () => new Promise(res => {
   i.src = 'https://ariahealthcare.in/img/logo.png';
 });
 
-const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : P.gradInk;
-const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : '#A8CEBA';
-const rule = s => s==='light'?P.rule : s==='dark'?'#2E4439' : '#569476';
-const acc = (s,t) => t==='red_flags' ? P.alert
-                   : s==='light' ? P.brand : s==='dark' ? P.lime : '#fff';
+const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : P.gradInk;
+const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : '#A8CEBA';
+const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : '#569476';
+const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert
+                   : s==='grad' ? '#fff' : P.brand;
 
 const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
 
@@ -290,12 +295,13 @@ function bg(ctx, surface){
     const g = ctx.createLinearGradient(0, 0, W*0.5, H);
     g.addColorStop(0,'#08422A'); g.addColorStop(.55,P.brand); g.addColorStop(1,P.mid);
     ctx.fillStyle = g;
-  } else ctx.fillStyle = surface==='light' ? P.paper : P.dark;
+  } else ctx.fillStyle = surface==='light' ? P.paper
+                       : surface==='alertbg' ? P.alertBg : P.dark;
   ctx.fillRect(0,0,W,H);
 }
 
-function header(ctx, surface, i, n){
-  const mp = 62, y = M - 6; let x = M;
+function header(ctx, surface, i, n, band){
+  const mp = 62, y = band ? band + 34 : M - 6; let x = M;
   if(logo){ ctx.drawImage(logo, x, y, mp, mp); x += mp + 22; }
   else{
     ctx.fillStyle = surface==='grad' ? '#fff' : acc(surface,'');
@@ -354,9 +360,8 @@ function rail(ctx, surface, type, i, n){
     for(let k=0;k<=200;k++){ const [x,y]=path(a+(b-a)*k/200); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
     ctx.stroke();
   };
-  const fill = surface==='light'?P.brand : type==='red_flags'?P.alert
-             : surface==='dark'?P.lime:'#fff';
-  draw(0,1, surface==='light'?'rgba(0,0,0,.12)':'rgba(255,255,255,.16)', 3);
+  const fill = surface==='grad' ? '#fff' : (type==='red_flags' ? P.alert : P.brand);
+  draw(0,1, surface==='grad'?'rgba(255,255,255,.28)':'rgba(0,0,0,.12)', 3);
   draw(0,prog, fill, 3);
   const [cx,cy] = path(prog);
   ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
@@ -457,7 +462,7 @@ function tlH(ctx,pts,surface,y){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(px,ly,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(px,ly,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col;
     let w = ctx.measureText(p.at||'').width;
     ctx.fillText(p.at||'', clamp(px-w/2,M,W-M-w), y);
@@ -481,7 +486,7 @@ function tlV(ctx,pts,surface,y){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
     if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
       ctx.fillText(p.label, rx+34+atW, cy); }
@@ -496,12 +501,40 @@ function mix(a,b,t){const A=hex(a),B=hex(b);
   return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;}
 
 /* ---- slides --------------------------------------------------------- */
+const imgCache = {};
+function loadImg(url){
+  if(imgCache[url]) return Promise.resolve(imgCache[url]);
+  return new Promise(res => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => { imgCache[url] = im; res(im); };
+    im.onerror = () => res(null);
+    im.src = url;
+  });
+}
+
+function imageBand(ctx, slide){
+  // A band across the top, never a background. Type over a photograph needs so
+  // much scrim that the picture stops being a picture; in a band both stay
+  // legible as themselves.
+  const src = slide.image && slide.image.url;
+  if(!src) return 0;
+  const im = imgCache[src];
+  if(!im) return 0;
+  const bh = Math.round(H * 0.36);
+  const scale = Math.max(W/im.width, bh/im.height);
+  const sw = im.width*scale, sh = im.height*scale;
+  ctx.drawImage(im, (W-sw)/2, -Math.max(0,(sh-bh)*0.38), sw, sh);
+  ctx.fillStyle = P.brand; ctx.fillRect(0, bh-6, W, 6);
+  return bh;
+}
+
 function renderSlide(slide, i, n){
   const c = document.createElement('canvas'); c.width=W; c.height=H;
   const ctx = c.getContext('2d');
   const type = slide.type, surface = SURFACE[type];
   bg(ctx, surface);
-  const hy = header(ctx, surface, i, n);
+  const band = imageBand(ctx, slide);
+  const hy = header(ctx, surface, i, n, band);
   // red_flags and cta stack source note, legal line and handle in the footer,
   // so they need more clearance than the rest.
   const extra = (type==='red_flags'||type==='cta') ? 74 : 0;
@@ -578,9 +611,7 @@ function renderSlide(slide, i, n){
       block(ctx, r, M+rw+gap, y, F(46,500), blh, ink(surface), col);
       y += rh + 34;
     });
-    ctx.save(); ctx.globalCompositeOperation='destination-over';
-    ctx.fillStyle='rgba(248,152,24,.10)'; ctx.fillRect(0, fieldTop, W, y-20-fieldTop);
-    ctx.restore();
+    // whole slide is the alert surface; no tint needed
   }
   else if(type==='cta'){
     const blh=Math.round(48*1.57);
@@ -602,7 +633,7 @@ function renderSlide(slide, i, n){
     ctx.fillStyle='#fff'; ctx.font=F(38,700); ctx.fillText(BRAND.name,x,ly+2);
     ctx.fillStyle=mut(surface); ctx.font=F(28,500);
     ctx.fillText(BRAND.tagline,x,ly+42);
-    ctx.fillText(BRAND.site+'  ·  '+BRAND.wa,x,ly+76);
+    ctx.fillText(BRAND.ig+'  ·  '+BRAND.site,x,ly+76);
   }
 
   footer(ctx, slide, surface, type);
@@ -656,6 +687,10 @@ async function build(raw){
     $('#diverge').innerHTML = '<b>Where guidance disagrees</b>' + esc(doc.guideline_conflict);
     show($('#diverge'),true);
   } else show($('#diverge'),false);
+
+  await Promise.all(doc.slides
+    .filter(s => s.image && s.image.url)
+    .map(s => loadImg(s.image.url)));
 
   const out = $('#out'); out.innerHTML='';
   doc.slides.forEach((s,i)=>{
@@ -711,6 +746,22 @@ function caption(doc){
     doc.alt_text.forEach((a,i)=>L.push('  '+(i+1)+'. '+a)); }
   return L.join('\n');
 }
+
+/* open the downloaded file — the path that needs no permissions at all */
+$('#pick').onclick = () => $('#file').click();
+$('#file').onchange = async e => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const b = $('#pick');
+  b.textContent = 'Reading the file…'; b.disabled = true;
+  try { await build(await f.text()); }
+  catch(_){
+    $('#err').textContent = 'That file could not be read. Try the paste option below.';
+    show($('#err'), true);
+  }
+  b.disabled = false; b.textContent = 'Open the file Claude sent';
+  e.target.value = '';
+};
 
 /* one-tap paste */
 $('#paste').onclick = async () => {

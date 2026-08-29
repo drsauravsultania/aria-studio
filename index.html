@@ -325,18 +325,14 @@ function header(ctx, surface, i, n, band){
     ctx.fillText(BRAND.mark, x+mp/2, y+mp/2+1);
     ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
   }
-  // Two lines of type against a 62px mark. Setting them from the top left the
-  // block sitting high; centring the pair on the mark's midline fixes it.
-  const nameSize = 34, credSize = 25, lead = 38;
-  const blockH = nameSize + lead - 4;
-  const ty = y + (mp - blockH) / 2 - 2;
-  ctx.fillStyle = ink(surface); ctx.font = F(nameSize,700);
-  ctx.fillText(BRAND.name, x, ty);
-  ctx.fillStyle = mut(surface); ctx.font = F(credSize,500);
-  ctx.fillText(BRAND.credential, x, ty + lead);
+  stackCentred(ctx, [
+    { txt: BRAND.name,       font: F(34,700), fill: ink(surface) },
+    { txt: BRAND.credential, font: F(25,500), fill: mut(surface) },
+  ], x, y + mp/2, 13);
   ctx.font = F(27,600); ctx.textAlign='right'; ctx.fillStyle = mut(surface);
-  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'),
-               W-M, y + (mp - 27) / 2);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y + mp/2);
+  ctx.textBaseline = 'top';
   ctx.textAlign='left';
   const ry = y + mp + 30;
   ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
@@ -351,6 +347,30 @@ function roundRect(ctx,x,y,w,h,r){
 }
 
 function _eyebrowH(){ return 40; }
+
+function inkOf(ctx, txt, font){
+  // Nominal font size is not ink height. Centring a text block on a logo using
+  // the point size puts it visibly high every time, because the em box carries
+  // space above the caps and below the baseline that the glyphs never use.
+  // Measure the real extents instead.
+  ctx.font = font;
+  const m = ctx.measureText(txt || 'Hg');
+  return { a: m.actualBoundingBoxAscent || 0, d: m.actualBoundingBoxDescent || 0 };
+}
+
+function stackCentred(ctx, lines, x, cy, gap){
+  // lines: [{txt, font, fill}] — drawn as one block, optically centred on cy.
+  const ink = lines.map(l => inkOf(ctx, l.txt, l.font));
+  const total = ink.reduce((s,k) => s + k.a + k.d, 0) + gap * (lines.length - 1);
+  let baseline = cy - total/2 + ink[0].a;
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((l, i) => {
+    ctx.font = l.font; ctx.fillStyle = l.fill;
+    ctx.fillText(l.txt, x, baseline);
+    if(i < lines.length - 1) baseline += ink[i].d + gap + ink[i+1].a;
+  });
+  ctx.textBaseline = 'top';
+}
 
 function eyebrow(ctx, text, x, y, surface, type){
   ctx.font = F(29,700); ctx.fillStyle = acc(surface,type); ctx.textBaseline='top';
@@ -403,10 +423,13 @@ function rail(ctx, surface, type, i, n){
   // without its caption, so the account name has to live inside the image or the
   // credit is lost the first time someone forwards one.
   const hf = F(Math.round(W*0.0235), 600);
-  const hy2 = H - RAIL - 2, gp = Math.round(W*0.0235*1.28);
-  drawIG(ctx, M, hy2 + 3, gp, mut(surface));
-  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'top';
-  ctx.fillText(BRAND.ig, M + gp + 12, hy2);
+  const hk = inkOf(ctx, BRAND.ig, hf);
+  const hcy = H - RAIL + hk.a/2;
+  const gp = Math.round((hk.a + hk.d) * 1.32);
+  drawIG(ctx, M, hcy - gp/2, gp, mut(surface));
+  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'middle';
+  ctx.fillText(BRAND.ig, M + gp + 12, hcy);
+  ctx.textBaseline = 'top';
 }
 
 
@@ -570,7 +593,7 @@ function renderSlide(slide, i, n){
   const hy = header(ctx, surface, i, n, band);
   // red_flags and cta stack source note, legal line and handle in the footer,
   // so they need more clearance than the rest.
-  const extra = (type==='red_flags'||type==='cta') ? 74 : 0;
+  const extra = type==='red_flags' ? 74 : type==='cta' ? 34 : 0;
   const top = hy+52, bot = H - RAIL - 96 - extra, cw = W - 2*M;
   ctx.textBaseline='top';
 
@@ -678,15 +701,11 @@ function renderSlide(slide, i, n){
       ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x2+mp2/2,ly+mp2/2);
       ctx.textAlign='left'; ctx.textBaseline='top'; x2 += mp2 + 20; }
 
-    // three lines centred on the mark's midline
-    const l1=36, l2=27, gap1=38, gap2=30;
-    const txtH = l1 + gap2 + l2;
-    let ty2 = ly + (mp2 - txtH) / 2 - 2;
-    ctx.fillStyle=P.gradInk; ctx.font=F(l1,700);
-    ctx.fillText(BRAND.name, x2, ty2);
-    ctx.fillStyle=P.gradMut; ctx.font=F(l2,500);
-    ctx.fillText(BRAND.tagline, x2, ty2+gap1);
-    ctx.fillText(BRAND.site, x2, ty2+gap1+gap2);
+    stackCentred(ctx, [
+      { txt: BRAND.name,    font: F(36,700), fill: P.gradInk },
+      { txt: BRAND.tagline, font: F(27,500), fill: P.gradMut },
+      { txt: BRAND.site,    font: F(27,500), fill: P.gradMut },
+    ], x2, ly + mp2/2, 11);
   }
 
   footer(ctx, slide, surface, type);

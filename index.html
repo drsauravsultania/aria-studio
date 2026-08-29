@@ -271,10 +271,10 @@ const tryLogo = () => new Promise(res => {
   i.src = 'https://ariahealthcare.in/img/logo.png';
 });
 
-const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : P.gradInk;
-const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : P.gradMut;
-const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : '#BCD8C7';
-const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : P.brand;
+const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : s==='photo'?'#F6F3EC' : P.gradInk;
+const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : s==='photo'?'#D9E4DC' : P.gradMut;
+const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : s==='photo'?'rgba(255,255,255,.35)' : '#BCD8C7';
+const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : s==='photo' ? P.lime : P.brand;
 
 const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
 
@@ -449,8 +449,8 @@ function rail(ctx, surface, type, i, n){
     for(let k=0;k<=200;k++){ const [x,y]=path(a+(b-a)*k/200); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
     ctx.stroke();
   };
-  const fill = type==='red_flags' ? P.alert : P.brand;
-  draw(0,1, 'rgba(0,0,0,.12)', 3);
+  const fill = type==='red_flags' ? P.alert : surface==='photo' ? P.lime : P.brand;
+  draw(0,1, surface==='photo' ? 'rgba(255,255,255,.30)' : 'rgba(0,0,0,.12)', 3);
   draw(0,prog, fill, 3);
   const [cx,cy] = path(prog);
   ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
@@ -646,9 +646,28 @@ function imageBand(ctx, slide){
 function renderSlide(slide, i, n){
   const c = document.createElement('canvas'); c.width=W; c.height=H;
   const ctx = c.getContext('2d');
-  const type = slide.type, surface = SURFACE[type];
+  const type = slide.type;
+  // The hook carries ten words, so it alone can afford a full-bleed photograph
+  // under a scrim. Slides with body text keep the band: prose over a photo
+  // needs so much darkening that both stop working.
+  const bleed = type==='hook' && slide.image && slide.image.url && imgCache[slide.image.url];
+  const surface = bleed ? 'photo' : SURFACE[type];
   bg(ctx, surface);
-  const band = imageBand(ctx, slide);
+  let band = 0;
+  if(bleed){
+    const im = imgCache[slide.image.url];
+    const sc = Math.max(W/im.width, H/im.height);
+    ctx.drawImage(im, (W-im.width*sc)/2, (H-im.height*sc)/2, im.width*sc, im.height*sc);
+    let g = ctx.createLinearGradient(0, 0, 0, H*0.30);
+    g.addColorStop(0,'rgba(8,22,15,.72)'); g.addColorStop(1,'rgba(8,22,15,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H*0.30);
+    g = ctx.createLinearGradient(0, H*0.34, 0, H);
+    g.addColorStop(0,'rgba(8,22,15,0)'); g.addColorStop(.45,'rgba(8,22,15,.66)');
+    g.addColorStop(1,'rgba(8,22,15,.9)');
+    ctx.fillStyle = g; ctx.fillRect(0, H*0.34, W, H*0.66);
+  } else {
+    band = imageBand(ctx, slide);
+  }
   const hy = header(ctx, surface, i, n, band);
   // red_flags and cta stack source note, legal line and handle in the footer,
   // so they need more clearance than the rest.
@@ -661,7 +680,9 @@ function renderSlide(slide, i, n){
     do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
         if(lines.length*lh <= (bot-top)*0.80) break; size-=6; } while(size>62);
     const totalH = _eyebrowH() + lines.length*lh + 44;
-    let y = top + Math.max(6, (bot - top - totalH) / 2.4);
+    let y = surface==='photo'
+      ? Math.max(top + 6, bot - totalH)
+      : top + Math.max(6, (bot - top - totalH) / 2.4);
     y = eyebrow(ctx, EYEBROW.hook, M, y, surface, type);
     y = block(ctx, lines, M, y, F(size,800), lh, ink(surface), acc(surface,type));
     ctx.fillStyle=acc(surface,type); ctx.fillRect(M, y+34, 168, 9);

@@ -82,6 +82,16 @@ function go(){
     language:v('lang'),avoidTopics:v('ban'),reviewer:v('rev')}};
   const txt=JSON.stringify(entry,null,2);
   document.getElementById('cfg').value=txt;
+  fetch(IMG_API+'/register',{method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({key,entry:entry[key]})})
+  .then(r=>r.json()).then(out=>{
+    const p=document.querySelector('#out p');
+    if(out.url) p.innerHTML='<b>Your studio link:</b><br><a href="'+out.url+'">'+out.url+
+      '</a><br><small>It activates after a quick verification — usually the same day. '+
+      'Save the link now; it is permanent.</small>';
+    else if(out.error) p.innerHTML='<b>'+out.error+'</b>';
+  }).catch(()=>{});
   document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(
     'New Carousel Studio profile:\n\n'+txt+
     (document.getElementById('logo').files.length?'\n\n(Logo attached in this chat)':''));

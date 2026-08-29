@@ -156,7 +156,11 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
     <h3>What should this carousel teach?</h3>
     <p>Type the topic. The writer checks the Indian guidelines, plans the
        pictures, and builds all seven slides.</p>
-        <input id="topic" type="text" placeholder="e.g. worms and deworming"
+    <select id="dept" aria-label="Department">
+      <option value="paediatrics">Paediatrics</option>
+    </select>
+    <div class="gap"></div>
+    <input id="topic" type="text" placeholder="e.g. worms and deworming"
            autocomplete="off">
     <div class="gap"></div>
     <button id="gen">Generate the carousel</button>
@@ -215,7 +219,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Studio v20260829-3</span>
+  <span style="opacity:.55">Studio v20260829-4</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1167,9 +1171,24 @@ async function startJob(path, body, kind){
 $('#gen').onclick = () => {
   const topic = $('#topic').value.trim();
   if(!topic){ $('#topic').focus(); return; }
-  startJob('/carousel', { topic }, 'carousel');
+  startJob('/carousel',
+    { topic, department: $('#dept').value, brand: 'aria' }, 'carousel');
 };
 
+// the department list is the Worker's, not the page's — one catalogue,
+// read by every surface that will ever exist
+(async () => {
+  try{
+    const r = await fetch(IMG_API + '/health');
+    const out = await r.json();
+    if(out.departments){
+      const sel = $('#dept');
+      sel.innerHTML = Object.entries(out.departments)
+        .map(([k,v]) => `<option value="${k}"${k==='paediatrics'?' selected':''}>${v}</option>`)
+        .join('');
+    }
+  }catch(_){ /* the hardcoded default stands */ }
+})();
 
 // a page reopened mid-job resumes it instead of forgetting it
 (function resume(){
@@ -1191,7 +1210,7 @@ async function sendChange(){
     const r = await fetch(IMG_API + '/revise', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ doc: DOC, instruction }),
+      body: JSON.stringify({ doc: DOC, instruction, department: $('#dept').value, brand: 'aria' }),
     });
     const out = await r.json();
     if(!r.ok || !out.job) throw new Error(out.error || 'The writer did not answer.');

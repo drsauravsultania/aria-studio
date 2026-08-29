@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-11</span>
+  <span style="opacity:.55">Aria Lab v20260829-12</span>
 </div>
 
 <div class="dock" id="dock">
@@ -376,10 +376,13 @@ function header(ctx, surface, i, n, band){
       ctx.textBaseline='top'; }
     ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
   }
-  stackCentred(ctx, [
-    { txt: BRAND.name,       font: F(34,700), fill: ink(surface) },
-    { txt: BRAND.credential, font: F(25,500), fill: mut(surface) },
-  ], x, y + mp/2, 13);
+  // Deterministic offsets against the 62px mark. The measured stack drifted
+  // in ways the metrics didn't admit; fixed numbers verified by render don't.
+  ctx.textBaseline='top';
+  ctx.font=F(34,700); ctx.fillStyle=ink(surface);
+  ctx.fillText(BRAND.name, x, y - 1);
+  ctx.font=F(25,500); ctx.fillStyle=mut(surface);
+  ctx.fillText(BRAND.credential, x, y + 37);
   ctx.font = F(27,600); ctx.textAlign='right'; ctx.fillStyle = mut(surface);
   ctx.textBaseline = 'middle';
   ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y + mp/2);

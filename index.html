@@ -66,6 +66,9 @@ button.quiet{background:transparent;color:var(--mut);font-weight:500;font-size:1
 button[disabled]{opacity:.35;pointer-events:none}
 .gap{height:9px}
 
+select{width:100%;border:1px solid var(--line);border-radius:11px;
+  padding:14px;font:17px 'Mukta',sans-serif;background:#fff;color:var(--ink);
+  -webkit-appearance:none;appearance:none}
 input[type=text]{width:100%;border:1px solid var(--line);border-radius:11px;
   padding:14px;font:17px 'Mukta',sans-serif;background:#fff;color:var(--ink)}
 textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:11px;
@@ -153,7 +156,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
     <h3>What should this carousel teach?</h3>
     <p>Type the topic. The writer checks the Indian guidelines, plans the
        pictures, and builds all seven slides.</p>
-    <input id="topic" type="text" placeholder="e.g. worms and deworming"
+        <input id="topic" type="text" placeholder="e.g. worms and deworming"
            autocomplete="off">
     <div class="gap"></div>
     <button id="gen">Generate the carousel</button>
@@ -1166,6 +1169,7 @@ $('#gen').onclick = () => {
   if(!topic){ $('#topic').focus(); return; }
   startJob('/carousel', { topic }, 'carousel');
 };
+
 
 // a page reopened mid-job resumes it instead of forgetting it
 (function resume(){

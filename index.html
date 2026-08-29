@@ -350,6 +350,8 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
 
+function _eyebrowH(){ return 40; }
+
 function eyebrow(ctx, text, x, y, surface, type){
   ctx.font = F(29,700); ctx.fillStyle = acc(surface,type); ctx.textBaseline='top';
   if(/[\u0900-\u097F]/.test(text)) ctx.fillText(text, x, y);
@@ -645,40 +647,46 @@ function renderSlide(slide, i, n){
     // whole slide is the alert surface; no tint needed
   }
   else if(type==='cta'){
-    // The sign-off was floating in dead space with the subheadline wrapping into
-    // it. Anchor the lockup to the bottom of the region and let the headline sit
-    // above it, so the gap is deliberate rather than left over.
+    // Measure the whole group, then centre it. Bottom-anchoring the lockup only
+    // moved the dead space above it; a short headline left a hole. Spacing is
+    // now fixed between the parts and the slack goes to the outside.
     const blh = Math.round(48*1.5);
     let fhs = 92, hl;
     do { hl = wrap(ctx, slide.headline, F(fhs,800), cw);
-         if(hl.length*Math.round(fhs*1.24) < (bot-top)*0.42) break; fhs -= 4; }
+         if(hl.length*Math.round(fhs*1.24) < (bot-top)*0.44) break; fhs -= 4; }
     while(fhs > 56);
+    const lh2 = Math.round(fhs*1.24);
     const sl = wrap(ctx, slide.subheadline||'', F(48,500), cw);
+    const mp2 = 74;
 
-    let y = top+6;
+    const groupH = _eyebrowH() + hl.length*lh2 + 20 + 5 + 40
+                 + sl.length*blh + 46 + mp2;
+    let y = top + Math.max(6, (bot - top - groupH) / 2);
+
     y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
-    y = block(ctx, hl, M, y, F(fhs,800), Math.round(fhs*1.24), P.gradInk, P.brand);
-    ctx.fillStyle=P.brand; ctx.fillRect(M, y+20, 120, 5);
-    block(ctx, sl, M, y+48, F(48,500), blh, P.gradMut, P.brand);
+    y = block(ctx, hl, M, y, F(fhs,800), lh2, P.gradInk, P.brand);
+    ctx.fillStyle = P.brand; ctx.fillRect(M, y+20, 120, 5);
+    y = block(ctx, sl, M, y+40, F(48,500), blh, P.gradMut, P.brand);
 
-    // lockup, bottom-anchored
-    const mp2 = 74, lockH = mp2 + 8;
-    const ly = bot - lockH;
-    ctx.strokeStyle='#BCD8C7'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(M, ly-30); ctx.lineTo(W-M, ly-30); ctx.stroke();
+    const ly = y + 46;
+    ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M, y+20); ctx.lineTo(W-M, y+20); ctx.stroke();
     let x2 = M;
     if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
     else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();
       ctx.fillStyle=P.paper; ctx.font=F(34,800); ctx.textAlign='center';
       ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x2+mp2/2,ly+mp2/2);
       ctx.textAlign='left'; ctx.textBaseline='top'; x2 += mp2 + 20; }
-    const lockBlock = 36 + 30 + 30;
-    let ty2 = ly + (mp2 - lockBlock) / 2 + 2;
-    ctx.fillStyle=P.gradInk; ctx.font=F(36,700);
+
+    // three lines centred on the mark's midline
+    const l1=36, l2=27, gap1=38, gap2=30;
+    const txtH = l1 + gap2 + l2;
+    let ty2 = ly + (mp2 - txtH) / 2 - 2;
+    ctx.fillStyle=P.gradInk; ctx.font=F(l1,700);
     ctx.fillText(BRAND.name, x2, ty2);
-    ctx.fillStyle=P.gradMut; ctx.font=F(27,500);
-    ctx.fillText(BRAND.tagline, x2, ty2+38);
-    ctx.fillText(BRAND.site, x2, ty2+68);
+    ctx.fillStyle=P.gradMut; ctx.font=F(l2,500);
+    ctx.fillText(BRAND.tagline, x2, ty2+gap1);
+    ctx.fillText(BRAND.site, x2, ty2+gap1+gap2);
   }
 
   footer(ctx, slide, surface, type);

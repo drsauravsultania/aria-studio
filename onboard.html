@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join Aria Carousel Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#056535;--ink:#10201A;--line:#DED8CB;--bg:#F6F3EC}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font:17px/1.55 'Mukta',sans-serif;padding:22px 16px 60px}
+main{max-width:640px;margin:0 auto}h1{color:var(--brand);margin:.2em 0}
+label{display:block;font-weight:600;margin:16px 0 4px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;
+padding:12px;font:inherit;background:#fff}
+small{color:#68706A}
+button{width:100%;margin-top:22px;padding:15px;border:0;border-radius:12px;
+background:var(--brand);color:#fff;font:600 18px 'Mukta';cursor:pointer}
+#out{display:none;margin-top:18px}
+textarea{height:200px;font:13px/1.4 monospace}
+a.wa{display:block;text-align:center;margin-top:10px;color:var(--brand);font-weight:700}
+</style></head><body><main>
+<h1>Set up your Carousel Studio</h1>
+<p>Fill this once. It becomes your studio's identity — every slide, caption and
+disclaimer is built from these answers. Nothing is published without your review.</p>
+
+<label>Full name with title</label><input id="nm" placeholder="Dr Anita Sharma">
+<label>Credential line, exactly as it should print</label>
+<input id="cred" placeholder="Dr Anita Sharma · Obstetrics & Gynaecology"><small>Appears on every slide.</small>
+<label>Registration number and council</label><input id="reg" placeholder="Reg. No. 12345 · JSMC">
+<label>Departments you will publish in</label>
+<input id="deps" placeholder="obgyn"><small>From: paediatrics, obgyn, cardiology, dermatology, orthopaedics, general. Comma-separate if several.</small>
+<label>Clinic or hospital name</label><input id="clin" placeholder="Sharma Women's Clinic">
+<label>Tagline (optional)</label><input id="tag">
+<label>City and state</label><input id="city" placeholder="Deoghar, Jharkhand"><small>Feeds seasonal and local writing.</small>
+<label>OPD hours</label><input id="opd" placeholder="Mon–Sat 10–2 & 5–8">
+<label>24×7 emergency at your facility?</label>
+<select id="emg"><option>No</option><option>Yes</option></select><small>Shapes what red-flag slides tell patients to do.</small>
+<label>Instagram handle</label><input id="ig" placeholder="@dranita_obgyn">
+<label>Website (optional)</label><input id="site">
+<label>Language on slides</label>
+<select id="lang"><option>English</option><option>English + Devanagari Hindi</option></select>
+<label>Topics you refuse to post on (optional)</label><input id="ban">
+<label>Who reviews before publishing?</label><input id="rev" placeholder="I review everything myself">
+
+<button onclick="go()">Create my studio profile</button>
+<div id="out">
+<p><b>Done.</b> Send this to Saurav — your studio goes live after his one-time setup and your first review call.</p>
+<textarea id="cfg" readonly></textarea>
+<a class="wa" id="wa" target="_blank">Send it on WhatsApp →</a>
+</div>
+<script>
+function v(id){return document.getElementById(id).value.trim()}
+function go(){
+  const key=(v('nm')||'doctor').toLowerCase().replace(/[^a-z]+/g,'').slice(0,16);
+  const entry={[key]:{name:v('clin')||v('nm'),tagline:v('tag'),credential:v('cred'),
+    handle:v('ig'),site:v('site'),reg:v('reg'),
+    defaultDepartment:(v('deps').split(',')[0]||'general').trim(),
+    allowedDepartments:v('deps').split(',').map(s=>s.trim()).filter(Boolean),
+    city:v('city'),opd:v('opd'),emergency:v('emg')==='Yes',
+    language:v('lang'),avoidTopics:v('ban'),reviewer:v('rev')}};
+  const txt=JSON.stringify(entry,null,2);
+  document.getElementById('cfg').value=txt;
+  document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(
+    'New Carousel Studio profile:\n\n'+txt);
+  document.getElementById('out').style.display='block';
+  document.getElementById('out').scrollIntoView({behavior:'smooth'});
+}
+</script></main></body></html>

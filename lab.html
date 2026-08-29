@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-5</span>
+  <span style="opacity:.55">Aria Lab v20260829-6</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1145,7 +1145,12 @@ async function runTicketed(path, body){
       body: JSON.stringify(body),
       signal: ctl.signal,
     });
-    const out = await r.json();
+    // The answer arrives at the end of a heartbeat stream: skip the padding,
+    // parse from the first brace.
+    const raw = await r.text();
+    let out;
+    try{ out = JSON.parse(raw.slice(raw.indexOf('{'))); }
+    catch(_){ out = { error: 'The writer sent an unreadable answer.' }; }
     if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
     clearInterval(tick); clearTimeout(cut);
     localStorage.removeItem('aria_job');

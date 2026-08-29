@@ -624,7 +624,12 @@ function imageBand(ctx, slide){
   const bh = Math.round(H * 0.36);
   const scale = Math.max(W/im.width, bh/im.height);
   const sw = im.width*scale, sh = im.height*scale;
+  // Clip to the band. Unclipped, a tall image paints on down the canvas and the
+  // header ends up sitting on the photograph it was meant to sit under.
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, bh); ctx.clip();
   ctx.drawImage(im, (W-sw)/2, -Math.max(0,(sh-bh)*0.38), sw, sh);
+  ctx.restore();
   ctx.fillStyle = P.brand; ctx.fillRect(0, bh-6, W, 6);
   return bh;
 }
@@ -794,41 +799,95 @@ function pickImage(i){
   inp.click();
 }
 
-async function makeImage(i, btn){
-  const s = DOC.slides[i];
-  const subject = prompt(
-    'What should the picture show?\n\nName the object or the moment, not the topic.\n' +
-    'Good: "a red plastic bucket half full of water on a wet bathroom floor"\n' +
-    'Weak: "bathroom safety"',
-    s.image_subject || '');
-  if(!subject) return;
-  const kind = confirm(
-    'Tap OK for a photograph — for an object she should recognise.\n' +
-    'Tap Cancel for a painted illustration — for a scene with a child in it.'
-  ) ? 'photo' : 'illustration';
+async function autoFill(){
+  // The carousel arrives with each picture's *subject* already decided by
+  // Claude; the pictures themselves are made here, automatically, the moment
+  // she opens it. She does nothing. "Make a picture" remains as the veto —
+  // tap it to get a different one.
+  for(let i = 0; i < DOC.slides.length; i++){
+    const s = DOC.slides[i];
+    if(!(s.image && s.image.subject) || (s.image && s.image.url)) continue;
+    const card = document.querySelectorAll('#out .slide')[i];
+    const btn = card && card.querySelector('.genimg');
+    if(btn){ btn.textContent = 'Making the picture…'; btn.disabled = true; }
+    try{
+      const r = await fetch(IMG_API + '/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: s.image.kind || 'photo',
+                               subject: s.image.subject }),
+      });
+      const out = await r.json();
+      if(r.ok && out.url){
+        await loadImg(out.url);
+        s.image.url = out.url;
+        s.image_subject = s.image.subject;
+        redraw();
+      } else if(btn){
+        // Shown on the button, not hidden: she should know a picture is
+        // missing and why, and be able to just tap to retry.
+        btn.textContent = 'Picture failed — tap to retry';
+      }
+    }catch(_){
+      if(btn) btn.textContent = 'Picture failed — tap to retry';
+    }
+    if(btn) btn.disabled = false;
+  }
+}
 
+async function makeImage(i, btn){
+  // She is never asked to write an image prompt. The slide says what it is
+  // about: use the subject Claude put in the carousel if there is one,
+  // otherwise ask the Worker to propose one from the slide text. Her control
+  // is the veto — "New picture" offers the used subject for editing.
+  const s = DOC.slides[i];
   const label = btn.textContent;
   btn.textContent = 'Making…'; btn.disabled = true;
   try{
-    const r = await fetch(IMG_API + '/generate', {
+    let subject = (s.image && s.image.subject) || s.image_subject || '';
+    let kind = (s.image && s.image.kind)
+             || (s.type === 'scene' ? 'illustration' : 'photo');
+
+    if(s.image_subject && s.image && s.image.url){
+      // A picture already exists: this tap means "different one". Offer the
+      // subject for editing rather than regenerating the same thing blind.
+      const edited = window.prompt('The picture will show:', subject);
+      if(edited === null){ btn.textContent = label; btn.disabled = false; return; }
+      if(edited.trim()) subject = edited.trim();
+    }
+
+    if(!subject){
+      const r = await fetch(IMG_API + '/suggest', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          topic: DOC.topic || '',
+          slide: { type: s.type, headline: s.headline || '', body: s.body || '' },
+        }),
+      });
+      const out = await r.json();
+      if(!r.ok || !out.subject) throw new Error(out.error || 'Could not think of a picture.');
+      subject = out.subject; kind = out.kind || kind;
+    }
+
+    const r2 = await fetch(IMG_API + '/generate', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ kind, subject }),
     });
-    const out = await r.json();
-    if(!r.ok || !out.url) throw new Error(out.error || 'Could not make the picture.');
-    await loadImg(out.url);
-    s.image = { kind, url: out.url };
+    const out2 = await r2.json();
+    if(!r2.ok || !out2.url) throw new Error(out2.error || 'Could not make the picture.');
+    await loadImg(out2.url);
+    s.image = { kind, url: out2.url, subject };
     s.image_subject = subject;
     redraw();
   }catch(e){
-    // Shown, never swallowed. A carousel that quietly ships without pictures is
-    // the failure nobody can diagnose.
     $('#err').textContent = e.message;
     show($('#err'), true);
     $('#err').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  btn.textContent = label; btn.disabled = false;
+  btn.textContent = s.image && s.image.url ? 'New picture' : label;
+  btn.disabled = false;
 }
 
 function redraw(){
@@ -911,6 +970,7 @@ async function build(raw){
 
   $('#capbox').textContent = caption(doc);
   $('#gate').checked = false; gate();
+  autoFill();
   show($('#stage'),true);
   $('#dock').classList.add('on');
   $('#stage').scrollIntoView({behavior:'smooth',block:'start'});

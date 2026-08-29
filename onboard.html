@@ -27,7 +27,15 @@ disclaimer is built from these answers. Nothing is published without your review
 <label>Registration number and council</label><input id="reg" placeholder="Reg. No. 12345 · JSMC">
 <label>Departments you will publish in</label>
 <input id="deps" placeholder="obgyn"><small>From: paediatrics, obgyn, cardiology, dermatology, orthopaedics, general. Comma-separate if several.</small>
-<label>Clinic or hospital name</label><input id="clin" placeholder="Sharma Women's Clinic">
+<label>How should your carousels be branded?</label>
+<select id="mode"><option value="personal">My personal name only</option>
+<option value="institution">My clinic / hospital name</option></select>
+<small>Choose personal if you post from your own account, or your employer's name cannot appear.</small>
+<label>Clinic or hospital name (only if branding as institution)</label>
+<input id="clin" placeholder="Sharma Women's Clinic">
+<label>Your logo (optional)</label>
+<input type="file" id="logo" accept="image/*">
+<small>Personal accounts can skip this — slides then carry your name in type, which looks clean and intentional.</small>
 <label>Tagline (optional)</label><input id="tag">
 <label>City and state</label><input id="city" placeholder="Deoghar, Jharkhand"><small>Feeds seasonal and local writing.</small>
 <label>OPD hours</label><input id="opd" placeholder="Mon–Sat 10–2 & 5–8">
@@ -50,7 +58,10 @@ disclaimer is built from these answers. Nothing is published without your review
 function v(id){return document.getElementById(id).value.trim()}
 function go(){
   const key=(v('nm')||'doctor').toLowerCase().replace(/[^a-z]+/g,'').slice(0,16);
-  const entry={[key]:{name:v('clin')||v('nm'),tagline:v('tag'),credential:v('cred'),
+  const personal = document.getElementById('mode').value==='personal';
+  const entry={[key]:{brandMode:personal?'personal':'institution',
+    name:personal?v('nm'):(v('clin')||v('nm')),
+    tagline:personal?'':v('tag'),credential:v('cred'),
     handle:v('ig'),site:v('site'),reg:v('reg'),
     defaultDepartment:(v('deps').split(',')[0]||'general').trim(),
     allowedDepartments:v('deps').split(',').map(s=>s.trim()).filter(Boolean),
@@ -59,7 +70,11 @@ function go(){
   const txt=JSON.stringify(entry,null,2);
   document.getElementById('cfg').value=txt;
   document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(
-    'New Carousel Studio profile:\n\n'+txt);
+    'New Carousel Studio profile:\n\n'+txt+
+    (document.getElementById('logo').files.length?'\n\n(Logo attached in this chat)':''));
+  if(document.getElementById('logo').files.length)
+    document.querySelector('#out p').innerHTML=
+      '<b>Done.</b> Send this to Saurav — and <b>attach your logo file in the same WhatsApp message</b>.';
   document.getElementById('out').style.display='block';
   document.getElementById('out').scrollIntoView({behavior:'smooth'});
 }

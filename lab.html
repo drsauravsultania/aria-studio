@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-2</span>
+  <span style="opacity:.55">Aria Lab v20260829-3</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1124,7 +1124,7 @@ function jobUI(on, label){
 async function runTicketed(path, body){
   const ticket = body.ticket || (crypto.randomUUID().replace(/-/g,'').slice(0,20));
   body.ticket = ticket;
-  localStorage.setItem('aria_job', JSON.stringify({ path, body }));
+  localStorage.setItem('aria_job', JSON.stringify({ path, body, t: Date.now() }));
   jobUI(true);
   try{
     const r = await fetch(IMG_API + path, {
@@ -1138,6 +1138,10 @@ async function runTicketed(path, body){
     jobUI(false);
     await build(JSON.stringify(out.doc));
   }catch(e){
+    // A failed ticket must be torn up, or every page load resumes the doomed
+    // job and holds the button hostage — which is exactly what "stuck on both
+    // pages" looked like.
+    localStorage.removeItem('aria_job');
     jobUI(false);
     $('#generr').textContent = e.message + ' — tap Generate to try again.';
     show($('#generr'), true);
@@ -1170,7 +1174,9 @@ $('#gen').onclick = () => {
 (function resume(){
   let j = null;
   try{ j = JSON.parse(localStorage.getItem('aria_job') || 'null'); }catch(_){}
-  if(j && j.path && j.body) runTicketed(j.path, j.body);
+  if(j && j.path && j.body && Date.now() - (j.t || 0) < 15 * 60 * 1000)
+    runTicketed(j.path, j.body);
+  else localStorage.removeItem('aria_job');
 })();
 document.addEventListener('visibilitychange', () => {
   // returning to the page checks immediately rather than waiting out the timer

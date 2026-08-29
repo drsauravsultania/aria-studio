@@ -231,7 +231,7 @@ const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
            paper:'#F6F3EC', ink:'#10201A', mut:'#686C68', rule:'#DED8CB',
            dark:'#E3F0E7', darkInk:'#0E281B', darkMut:'#627C6C', darkRule:'#C6DBCD',
            alertBg:'#FDF0E0', alertInk:'#3A220A', alertMut:'#8C6A42',
-           alertRule:'#F0D6B4', gradInk:'#CBE8D6'};
+           alertRule:'#F0D6B4', gradInk:'#2B4C3A', gradMut:'#5E7A69'};
 const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
 
 const BRAND = {
@@ -257,10 +257,9 @@ const tryLogo = () => new Promise(res => {
 });
 
 const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : P.gradInk;
-const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : '#A8CEBA';
-const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : '#569476';
-const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert
-                   : s==='grad' ? '#fff' : P.brand;
+const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : P.gradMut;
+const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : '#BCD8C7';
+const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : P.brand;
 
 const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
 
@@ -302,8 +301,11 @@ function block(ctx, lines, x, y, font, lh, colour, accent){
 
 function bg(ctx, surface){
   if(surface === 'grad'){
-    const g = ctx.createLinearGradient(0, 0, W*0.5, H);
-    g.addColorStop(0,'#08422A'); g.addColorStop(.55,P.brand); g.addColorStop(1,P.mid);
+    // Pastel throughout. The deep slab carried authority but read as heavy next
+    // to six soft slides; the argument now sits on a pale wash and the weight
+    // comes from the type and the accent, not from the paper.
+    const g = ctx.createLinearGradient(0, 0, W*0.55, H);
+    g.addColorStop(0,'#EFF7F1'); g.addColorStop(.55,'#E1F0E7'); g.addColorStop(1,'#D3E9DC');
     ctx.fillStyle = g;
   } else ctx.fillStyle = surface==='light' ? P.paper
                        : surface==='alertbg' ? P.alertBg : P.dark;
@@ -314,7 +316,7 @@ function header(ctx, surface, i, n, band){
   const mp = 62, y = band ? band + 34 : M - 6; let x = M;
   if(logo){ ctx.drawImage(logo, x, y, mp, mp); x += mp + 22; }
   else{
-    ctx.fillStyle = surface==='grad' ? '#fff' : acc(surface,'');
+    ctx.fillStyle = acc(surface,'');
     roundRect(ctx, x, y, mp, mp, 14); ctx.fill();
     ctx.strokeStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
     ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
@@ -323,12 +325,18 @@ function header(ctx, surface, i, n, band){
     ctx.fillText(BRAND.mark, x+mp/2, y+mp/2+1);
     ctx.textAlign='left'; ctx.textBaseline='top'; x += mp + 22;
   }
-  ctx.fillStyle = ink(surface); ctx.font = F(34,700);
-  ctx.fillText(BRAND.name, x, y+2);
-  ctx.fillStyle = mut(surface); ctx.font = F(25,500);
-  ctx.fillText(BRAND.credential, x, y+40);
-  ctx.font = F(27,600); ctx.textAlign='right';
-  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y+12);
+  // Two lines of type against a 62px mark. Setting them from the top left the
+  // block sitting high; centring the pair on the mark's midline fixes it.
+  const nameSize = 34, credSize = 25, lead = 38;
+  const blockH = nameSize + lead - 4;
+  const ty = y + (mp - blockH) / 2 - 2;
+  ctx.fillStyle = ink(surface); ctx.font = F(nameSize,700);
+  ctx.fillText(BRAND.name, x, ty);
+  ctx.fillStyle = mut(surface); ctx.font = F(credSize,500);
+  ctx.fillText(BRAND.credential, x, ty + lead);
+  ctx.font = F(27,600); ctx.textAlign='right'; ctx.fillStyle = mut(surface);
+  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'),
+               W-M, y + (mp - 27) / 2);
   ctx.textAlign='left';
   const ry = y + mp + 30;
   ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
@@ -349,16 +357,29 @@ function eyebrow(ctx, text, x, y, surface, type){
   return y + 40;
 }
 
-function drawIG(ctx, x, y, s, colour){
-  const w = Math.max(2, Math.round(s*0.088));
-  ctx.save(); ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = w;
-  const r = s*0.26;
+function drawIG(ctx, x, y, s, colour, mono){
+  // The real Instagram gradient, because that is what people recognise in a
+  // quarter-second. On the deep-green gradient slides the colour muddies against
+  // the background, so those fall back to a solid glyph.
+  const w = Math.max(2, Math.round(s*0.10));
+  let stroke = colour;
+  if(!mono){
+    const g = ctx.createLinearGradient(x, y+s, x+s, y);
+    g.addColorStop(0,'#FEDA75'); g.addColorStop(.25,'#FA7E1E');
+    g.addColorStop(.5,'#D62976'); g.addColorStop(.75,'#962FBF');
+    g.addColorStop(1,'#4F5BD5');
+    stroke = g;
+  }
+  ctx.save();
+  ctx.strokeStyle = stroke; ctx.fillStyle = stroke;
+  ctx.lineWidth = w; ctx.lineJoin = 'round';
+  const r = s*0.28, i = w/2;
   ctx.beginPath();
-  ctx.moveTo(x+r, y); ctx.arcTo(x+s, y, x+s, y+s, r);
-  ctx.arcTo(x+s, y+s, x, y+s, r); ctx.arcTo(x, y+s, x, y, r);
-  ctx.arcTo(x, y, x+s, y, r); ctx.closePath(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.22, 0, 7); ctx.stroke();
-  ctx.beginPath(); ctx.arc(x+s*0.74, y+s*0.26, s*0.055, 0, 7); ctx.fill();
+  ctx.moveTo(x+r, y+i); ctx.arcTo(x+s-i, y+i, x+s-i, y+s-i, r);
+  ctx.arcTo(x+s-i, y+s-i, x+i, y+s-i, r); ctx.arcTo(x+i, y+s-i, x+i, y+i, r);
+  ctx.arcTo(x+i, y+i, x+s-i, y+i, r); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.215, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s*0.755, y+s*0.245, s*0.058, 0, 7); ctx.fill();
   ctx.restore();
 }
 
@@ -370,8 +391,8 @@ function rail(ctx, surface, type, i, n){
     for(let k=0;k<=200;k++){ const [x,y]=path(a+(b-a)*k/200); k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
     ctx.stroke();
   };
-  const fill = surface==='grad' ? '#fff' : (type==='red_flags' ? P.alert : P.brand);
-  draw(0,1, surface==='grad'?'rgba(255,255,255,.28)':'rgba(0,0,0,.12)', 3);
+  const fill = type==='red_flags' ? P.alert : P.brand;
+  draw(0,1, 'rgba(0,0,0,.12)', 3);
   draw(0,prog, fill, 3);
   const [cx,cy] = path(prog);
   ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
@@ -472,7 +493,7 @@ function tlH(ctx,pts,surface,y){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(px,ly,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(px,ly,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col;
     let w = ctx.measureText(p.at||'').width;
     ctx.fillText(p.at||'', clamp(px-w/2,M,W-M-w), y);
@@ -496,7 +517,7 @@ function tlV(ctx,pts,surface,y){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
     if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
       ctx.fillText(p.label, rx+34+atW, cy); }
@@ -583,7 +604,7 @@ function renderSlide(slide, i, n){
         if(lines.length*lh <= (bot-top)*cap) break; size-=5; } while(size>46);
     let y = top+6;
     y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
-    y = block(ctx, lines, M, y, F(size,800), lh, '#fff', P.lime);
+    y = block(ctx, lines, M, y, F(size,800), lh, P.gradInk, P.mid);
     if(fig) drawFigure(ctx, fig, surface, y+50);
   }
   else if(type==='steps'){
@@ -624,26 +645,40 @@ function renderSlide(slide, i, n){
     // whole slide is the alert surface; no tint needed
   }
   else if(type==='cta'){
-    const blh=Math.round(48*1.57);
-    const hl = wrap(ctx, slide.headline, F(92,800), cw);
+    // The sign-off was floating in dead space with the subheadline wrapping into
+    // it. Anchor the lockup to the bottom of the region and let the headline sit
+    // above it, so the gap is deliberate rather than left over.
+    const blh = Math.round(48*1.5);
+    let fhs = 92, hl;
+    do { hl = wrap(ctx, slide.headline, F(fhs,800), cw);
+         if(hl.length*Math.round(fhs*1.24) < (bot-top)*0.42) break; fhs -= 4; }
+    while(fhs > 56);
     const sl = wrap(ctx, slide.subheadline||'', F(48,500), cw);
+
     let y = top+6;
     y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
-    y = block(ctx, hl, M, y, F(92,800), 120, '#fff', '#fff');
-    ctx.fillStyle='#fff'; ctx.fillRect(M, y+18, 132, 6);
-    y = block(ctx, sl, M, y+46, F(48,500), blh, P.gradInk, '#fff');
-    ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(M,y+34); ctx.lineTo(W-M,y+34); ctx.stroke();
-    let x=M, ly=y+58, mp=74;
-    if(logo){ ctx.drawImage(logo,x,ly,mp,mp); x+=mp+22; }
-    else{ ctx.fillStyle='#fff'; roundRect(ctx,x,ly,mp,mp,16); ctx.fill();
-      ctx.fillStyle=P.brand; ctx.font=F(34,800); ctx.textAlign='center';
-      ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x+mp/2,ly+mp/2);
-      ctx.textAlign='left'; ctx.textBaseline='top'; x+=mp+22; }
-    ctx.fillStyle='#fff'; ctx.font=F(38,700); ctx.fillText(BRAND.name,x,ly+2);
-    ctx.fillStyle=mut(surface); ctx.font=F(28,500);
-    ctx.fillText(BRAND.tagline,x,ly+42);
-    ctx.fillText(BRAND.ig+'  ·  '+BRAND.site,x,ly+76);
+    y = block(ctx, hl, M, y, F(fhs,800), Math.round(fhs*1.24), P.gradInk, P.brand);
+    ctx.fillStyle=P.brand; ctx.fillRect(M, y+20, 120, 5);
+    block(ctx, sl, M, y+48, F(48,500), blh, P.gradMut, P.brand);
+
+    // lockup, bottom-anchored
+    const mp2 = 74, lockH = mp2 + 8;
+    const ly = bot - lockH;
+    ctx.strokeStyle='#BCD8C7'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(M, ly-30); ctx.lineTo(W-M, ly-30); ctx.stroke();
+    let x2 = M;
+    if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
+    else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();
+      ctx.fillStyle=P.paper; ctx.font=F(34,800); ctx.textAlign='center';
+      ctx.textBaseline='middle'; ctx.fillText(BRAND.mark,x2+mp2/2,ly+mp2/2);
+      ctx.textAlign='left'; ctx.textBaseline='top'; x2 += mp2 + 20; }
+    const lockBlock = 36 + 30 + 30;
+    let ty2 = ly + (mp2 - lockBlock) / 2 + 2;
+    ctx.fillStyle=P.gradInk; ctx.font=F(36,700);
+    ctx.fillText(BRAND.name, x2, ty2);
+    ctx.fillStyle=P.gradMut; ctx.font=F(27,500);
+    ctx.fillText(BRAND.tagline, x2, ty2+38);
+    ctx.fillText(BRAND.site, x2, ty2+68);
   }
 
   footer(ctx, slide, surface, type);

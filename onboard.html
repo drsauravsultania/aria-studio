@@ -26,7 +26,8 @@ disclaimer is built from these answers. Nothing is published without your review
 <input id="cred" placeholder="Dr Anita Sharma · Obstetrics & Gynaecology"><small>Appears on every slide.</small>
 <label>Registration number and council</label><input id="reg" placeholder="Reg. No. 12345 · JSMC">
 <label>Departments you will publish in</label>
-<input id="deps" placeholder="obgyn"><small>From: paediatrics, obgyn, cardiology, dermatology, orthopaedics, general. Comma-separate if several.</small>
+<div id="deps" style="border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff"></div>
+<small>Tick every specialty you are qualified to publish in. Your studio will only offer these.</small>
 <label>How should your carousels be branded?</label>
 <select id="mode"><option value="personal">My personal name only</option>
 <option value="institution">My clinic / hospital name</option></select>
@@ -55,6 +56,18 @@ disclaimer is built from these answers. Nothing is published without your review
 <a class="wa" id="wa" target="_blank">Send it on WhatsApp →</a>
 </div>
 <script>
+const IMG_API='https://img.ariahealthcare.in';
+const FALLBACK={paediatrics:'Paediatrics',obgyn:'Obstetrics & Gynaecology',
+cardiology:'Cardiology',dermatology:'Dermatology',
+orthopaedics:'Orthopaedics',general:'General Medicine'};
+(async()=>{
+  let cat=FALLBACK;
+  try{const r=await fetch(IMG_API+'/health');const o=await r.json();
+      if(o.departments)cat=o.departments;}catch(_){}
+  document.getElementById('deps').innerHTML=Object.entries(cat).map(([k,v])=>
+    `<label style="font-weight:400;margin:4px 0;display:flex;gap:8px;align-items:center">
+     <input type="checkbox" value="${k}" style="width:auto">${v}</label>`).join('');
+})();
 function v(id){return document.getElementById(id).value.trim()}
 function go(){
   const key=(v('nm')||'doctor').toLowerCase().replace(/[^a-z]+/g,'').slice(0,16);
@@ -63,8 +76,8 @@ function go(){
     name:personal?v('nm'):(v('clin')||v('nm')),
     tagline:personal?'':v('tag'),credential:v('cred'),
     handle:v('ig'),site:v('site'),reg:v('reg'),
-    defaultDepartment:(v('deps').split(',')[0]||'general').trim(),
-    allowedDepartments:v('deps').split(',').map(s=>s.trim()).filter(Boolean),
+    defaultDepartment:(document.querySelector('#deps input:checked')||{value:'general'}).value,
+    allowedDepartments:[...document.querySelectorAll('#deps input:checked')].map(c=>c.value),
     city:v('city'),opd:v('opd'),emergency:v('emg')==='Yes',
     language:v('lang'),avoidTopics:v('ban'),reviewer:v('rev')}};
   const txt=JSON.stringify(entry,null,2);

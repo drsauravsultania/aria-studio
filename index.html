@@ -626,6 +626,11 @@ function imageBand(ctx, slide){
   // A band across the top, never a background. Type over a photograph needs so
   // much scrim that the picture stops being a picture; in a band both stay
   // legible as themselves.
+  //
+  // And when a slide carries a figure, the figure IS the visual: a temperature
+  // table teaches more than a photograph of dinner, and both together crush the
+  // text into the footer — that was the slide-2 collision.
+  if(slide.figure) return 0;
   const src = slide.image && slide.image.url;
   if(!src) return 0;
   const im = imgCache[src];
@@ -996,7 +1001,7 @@ async function build(raw){
     const url = renderSlide(s,i,doc.slides.length).toDataURL('image/png');
     const d = document.createElement('div'); d.className='slide';
     const hasImg = !!(s.image && s.image.url);
-    const canImg = ['scene','common_practice','hook'].includes(s.type);
+    const canImg = ['scene','common_practice','hook','cta'].includes(s.type) && !s.figure;
     d.innerHTML = `<img src="${url}" alt="${esc((doc.alt_text&&doc.alt_text[i])||('Slide '+(i+1)))}">`
       + `<div class="bar"><span class="n">${i+1} of ${doc.slides.length}</span>`
       + (canImg ? `<button class="genimg" data-i="${i}">${hasImg?'New picture':'Make a picture'}</button>`

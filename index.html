@@ -99,7 +99,12 @@ textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:
 .slide img{width:100%;display:block;border-radius:10px}
 .slide .bar{display:flex;align-items:center;gap:10px;margin-top:10px}
 .slide .n{font-size:14px;color:var(--mut);font-weight:600;flex:none;min-width:58px}
-.slide button{padding:11px 14px;font-size:15.5px}
+.slide .bar button{padding:11px 14px;font-size:15.5px;flex:1}
+.slide .addimg,.slide .genimg{background:transparent;color:var(--brand);
+  box-shadow:inset 0 0 0 1.5px var(--brand)}
+.slide .genimg{background:var(--brand);color:#fff;box-shadow:none}
+.slide .bar{flex-wrap:wrap}
+.locked .slide .addimg{opacity:1;pointer-events:auto}
 .slide.saved{border-color:#BEDFCB;background:#F7FCF9}
 .slide.saved button{background:var(--ok)}
 .locked .slide button{opacity:.3;pointer-events:none}
@@ -640,7 +645,8 @@ function renderSlide(slide, i, n){
     let size=158, lines, lh;
     do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
         if(lines.length*lh <= (bot-top)*0.80) break; size-=6; } while(size>62);
-    let y = top+6;
+    const totalH = _eyebrowH() + lines.length*lh + 44;
+    let y = top + Math.max(6, (bot - top - totalH) / 2.4);
     y = eyebrow(ctx, EYEBROW.hook, M, y, surface, type);
     y = block(ctx, lines, M, y, F(size,800), lh, ink(surface), acc(surface,type));
     ctx.fillStyle=acc(surface,type); ctx.fillRect(M, y+34, 168, 9);
@@ -662,14 +668,24 @@ function renderSlide(slide, i, n){
     if(fig) drawFigure(ctx, fig, surface, y+52);
   }
   else if(type==='correction'){
-    const fig = slide.figure, cap = fig?0.44:0.82;
-    let size=104, lines, lh;
-    do{ lh=Math.round(size*1.30); lines=wrap(ctx, slide.headline, F(size,800), cw);
-        if(lines.length*lh <= (bot-top)*cap) break; size-=5; } while(size>46);
-    let y = top+6;
+    const fig = slide.figure;
+    // Without a figure this slide is one sentence, and top-anchoring left the
+    // lower two-thirds blank. Let the type grow into the space and centre what
+    // is left, so the emptiness is margin rather than a hole.
+    const cap = fig ? 0.44 : 0.94;
+    const maxSize = fig ? 104 : 132;
+    let size = maxSize, lines, lh;
+    do { lh = Math.round(size*1.26);
+         lines = wrap(ctx, slide.headline, F(size,800), cw);
+         if(lines.length*lh <= (bot-top)*cap) break; size -= 5; }
+    while(size > 46);
+
+    const figH = fig ? figHeight(fig) + 50 : 0;
+    const totalH = _eyebrowH() + lines.length*lh + figH;
+    let y = top + (fig ? 6 : Math.max(6, (bot - top - totalH) / 2));
     y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
     y = block(ctx, lines, M, y, F(size,800), lh, P.gradInk, P.mid);
-    if(fig) drawFigure(ctx, fig, surface, y+50);
+    if(fig) drawFigure(ctx, fig, surface, y + 50);
   }
   else if(type==='steps'){
     const col = acc(surface,type), numW=116, blh=Math.round(46*1.57);
@@ -757,7 +773,74 @@ function renderSlide(slide, i, n){
 
 /* ---- app ------------------------------------------------------------ */
 const REQ = ['hook','scene','common_practice','correction','steps','red_flags','cta'];
-let DOC = null, saved = new Set();
+const IMG_API = 'https://img.ariahealthcare.in';
+let DOC = null, saved = new Set(), imgURL = {};
+
+// Any generator, any device. She makes a picture wherever she likes — Gemini on
+// her phone, or a photo she took herself — and drops it straight in. No URL, no
+// hosting, no API quota to run out of.
+function pickImage(i){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = async e => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const url = URL.createObjectURL(f);
+    await loadImg(url);
+    DOC.slides[i].image = { kind: 'photo', url };
+    redraw();
+  };
+  inp.click();
+}
+
+async function makeImage(i, btn){
+  const s = DOC.slides[i];
+  const subject = prompt(
+    'What should the picture show?\n\nName the object or the moment, not the topic.\n' +
+    'Good: "a red plastic bucket half full of water on a wet bathroom floor"\n' +
+    'Weak: "bathroom safety"',
+    s.image_subject || '');
+  if(!subject) return;
+  const kind = confirm(
+    'Tap OK for a photograph — for an object she should recognise.\n' +
+    'Tap Cancel for a painted illustration — for a scene with a child in it.'
+  ) ? 'photo' : 'illustration';
+
+  const label = btn.textContent;
+  btn.textContent = 'Making…'; btn.disabled = true;
+  try{
+    const r = await fetch(IMG_API + '/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind, subject }),
+    });
+    const out = await r.json();
+    if(!r.ok || !out.url) throw new Error(out.error || 'Could not make the picture.');
+    await loadImg(out.url);
+    s.image = { kind, url: out.url };
+    s.image_subject = subject;
+    redraw();
+  }catch(e){
+    // Shown, never swallowed. A carousel that quietly ships without pictures is
+    // the failure nobody can diagnose.
+    $('#err').textContent = e.message;
+    show($('#err'), true);
+    $('#err').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  btn.textContent = label; btn.disabled = false;
+}
+
+function redraw(){
+  const cards = document.querySelectorAll('#out .slide');
+  DOC.slides.forEach((s, i) => {
+    const u = renderSlide(s, i, DOC.slides.length).toDataURL('image/png');
+    imgURL[i] = u;
+    const im = cards[i] && cards[i].querySelector('img');
+    if(im) im.src = u;
+    const b = cards[i] && cards[i].querySelector('.genimg');
+    if(b) b.textContent = s.image ? 'New picture' : 'Make a picture';
+  });
+}
 
 const show = (el,on) => el.classList.toggle('hidden', !on);
 
@@ -809,10 +892,19 @@ async function build(raw){
   doc.slides.forEach((s,i)=>{
     const url = renderSlide(s,i,doc.slides.length).toDataURL('image/png');
     const d = document.createElement('div'); d.className='slide';
+    const hasImg = !!(s.image && s.image.url);
+    const canImg = ['scene','common_practice','hook'].includes(s.type);
     d.innerHTML = `<img src="${url}" alt="${esc((doc.alt_text&&doc.alt_text[i])||('Slide '+(i+1)))}">`
       + `<div class="bar"><span class="n">${i+1} of ${doc.slides.length}</span>`
+      + (canImg ? `<button class="genimg" data-i="${i}">${hasImg?'New picture':'Make a picture'}</button>`
+                + `<button class="addimg" data-i="${i}">Use my own</button>` : '')
       + `<button data-i="${i}">Save slide ${i+1}</button></div>`;
-    d.querySelector('button').onclick = () => saveSlide(i, url, d);
+    const btns = d.querySelectorAll('button');
+    btns[btns.length-1].onclick = () => saveSlide(i, imgURL[i] || url, d);
+    if(canImg){
+      d.querySelector('.addimg').onclick = () => pickImage(i);
+      d.querySelector('.genimg').onclick = e => makeImage(i, e.target);
+    }
     out.appendChild(d);
   });
 

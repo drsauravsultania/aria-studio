@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-7</span>
+  <span style="opacity:.55">Aria Lab v20260829-8</span>
 </div>
 
 <div class="dock" id="dock">
@@ -864,6 +864,11 @@ function renderSlide(slide, i, n){
 /* ---- app ------------------------------------------------------------ */
 const REQ = ['hook','scene','common_practice','correction','steps','red_flags','cta'];
 const IMG_API = 'https://img.ariahealthcare.in';
+// The link is the identity: /lab.html?brand=saurav writes as that doctor,
+// offering only their departments. Slide chrome stays house-skinned for now —
+// per-brand rendering is item 5.
+const BRAND_KEY = new URLSearchParams(location.search).get('brand') || 'aria';
+let BRAND_INFO = null;
 let DOC = null, saved = new Set(), imgURL = {};
 
 // Any generator, any device. She makes a picture wherever she likes — Gemini on
@@ -1175,19 +1180,33 @@ async function startJob(path, body){ return runTicketed(path, body); }
 $('#gen').onclick = () => {
   const topic = $('#topic').value.trim();
   if(!topic){ $('#topic').focus(); return; }
-  startJob('/carousel', { topic, department: $('#dept').value, brand: 'aria' });
+  startJob('/carousel', { topic, department: $('#dept').value, brand: BRAND_KEY });
 };
 
 // the department list is the Worker's, not the page's — one catalogue,
 // read by every surface that will ever exist
 (async () => {
   try{
+    if(BRAND_KEY !== 'aria'){
+      const rb = await fetch(IMG_API + '/brand?key=' + encodeURIComponent(BRAND_KEY));
+      if(rb.ok){
+        BRAND_INFO = await rb.json();
+        const h = document.querySelector('h1');
+        if(h && BRAND_INFO.credential)
+          h.insertAdjacentHTML('afterend',
+            '<p style="margin:2px 0 0;color:var(--brand);font-weight:700">Writing as ' +
+            BRAND_INFO.credential + '</p>');
+      }
+    }
     const r = await fetch(IMG_API + '/health');
     const out = await r.json();
+    if(BRAND_INFO && BRAND_INFO.allowedDepartments && out.departments)
+      out.departments = Object.fromEntries(Object.entries(out.departments)
+        .filter(([k]) => BRAND_INFO.allowedDepartments.includes(k)));
     if(out.departments){
       const sel = $('#dept');
       sel.innerHTML = Object.entries(out.departments)
-        .map(([k,v]) => `<option value="${k}"${k==='paediatrics'?' selected':''}>${v}</option>`)
+        .map(([k,v]) => `<option value="${k}"${k===((BRAND_INFO&&BRAND_INFO.defaultDepartment)||'paediatrics')?' selected':''}>${v}</option>`)
         .join('');
     }
   }catch(_){ /* the hardcoded default stands */ }
@@ -1212,7 +1231,7 @@ async function sendChange(){
   btn.disabled = true; box.disabled = true; btn.textContent = 'Working…';
   try{
     btn.textContent = 'Working…';
-    await runTicketed('/revise', { doc: DOC, instruction, department: $('#dept').value, brand: 'aria' });
+    await runTicketed('/revise', { doc: DOC, instruction, department: $('#dept').value, brand: BRAND_KEY });
   }catch(e){
     $('#err').textContent = e.message; show($('#err'), true);
   }

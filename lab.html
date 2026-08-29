@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-8</span>
+  <span style="opacity:.55">Aria Lab v20260829-9</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1028,7 +1028,7 @@ async function build(raw){
 
   try{ await document.fonts.load('800 100px Mukta');
        await document.fonts.load('500 48px Mukta'); }catch(_){}
-  if(logo === null) logo = await tryLogo();
+  if(logo === null) logo = window.__noLogo ? null : await tryLogo();
 
   const m = $('#meta');
   if(m) m.textContent = doc._meta
@@ -1192,6 +1192,24 @@ $('#gen').onclick = () => {
       if(rb.ok){
         BRAND_INFO = await rb.json();
         const h = document.querySelector('h1');
+        // The slides must wear the doctor, not the house. Overwrite the page
+        // brand before anything renders; personal mode drops the logo and the
+        // institutional lockup entirely.
+        BRAND.ig = BRAND_INFO.handle || BRAND.ig;
+        if(BRAND_INFO.site) BRAND.site = BRAND_INFO.site;
+        if(BRAND_INFO.brandMode === 'personal'){
+          BRAND.name = BRAND_INFO.name;
+          const c = BRAND_INFO.credential || '';
+          BRAND.credential = c.includes('\u00b7')
+            ? c.split('\u00b7').slice(1).join('\u00b7').trim() : c;
+          BRAND.tagline = '';
+          BRAND.mark = (BRAND_INFO.name || 'D').replace(/^Dr\.?\s*/i,'')[0] || 'D';
+          window.__noLogo = true; logo = null;
+        } else if(BRAND_INFO.name){
+          BRAND.name = BRAND_INFO.name;
+          BRAND.credential = BRAND_INFO.credential || BRAND.credential;
+          if(BRAND_INFO.tagline) BRAND.tagline = BRAND_INFO.tagline;
+        }
         if(h && BRAND_INFO.credential)
           h.insertAdjacentHTML('afterend',
             '<p style="margin:2px 0 0;color:var(--brand);font-weight:700">Writing as ' +

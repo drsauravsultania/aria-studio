@@ -212,7 +212,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Studio v20260829-1</span>
+  <span style="opacity:.55">Studio v20260829-2</span>
 </div>
 
 <div class="dock" id="dock">
@@ -740,19 +740,30 @@ function renderSlide(slide, i, n){
     if(fig) drawFigure(ctx, fig, surface, y + 50);
   }
   else if(type==='steps'){
-    const col = acc(surface,type), numW=116, blh=Math.round(46*1.57);
-    const hl = wrap(ctx, slide.headline, F(92,800), cw);
-    const rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(46,500),cw-numW));
+    // The third disease of the day: this branch drew without measuring, so a
+    // three-line bullet ran into the footer. Fit the whole block first —
+    // headline shrinks, then the bullets — exactly as red_flags now does.
+    const col = acc(surface,type), numW=116;
+    let hs=92, bs=46, hl, rows, blh;
+    while(true){
+      blh = Math.round(bs*1.5);
+      hl = wrap(ctx, slide.headline, F(hs,800), cw);
+      rows = (slide.bullets||[]).map(b=>wrap(ctx,b,F(bs,500),cw-numW));
+      const total = _eyebrowH() + hl.length*Math.round(hs*1.24) + 46
+                  + rows.reduce((s,r)=>s + r.length*blh + 52, 0);
+      if(total <= (bot-top) || bs <= 34) break;
+      if(hs > 62) hs -= 4; else bs -= 2;
+    }
     let y = top+6;
     y = eyebrow(ctx, EYEBROW.steps, M, y, surface, type);
-    y = block(ctx, hl, M, y, F(92,800), 120, ink(surface), col);
+    y = block(ctx, hl, M, y, F(hs,800), Math.round(hs*1.24), ink(surface), col);
     y += 46;
     rows.forEach((r,i)=>{
       const rh = r.length*blh;
-      ctx.font=F(132,700); ctx.fillStyle=col; ctx.textBaseline='middle';
+      ctx.font=F(Math.round(bs*2.85),700); ctx.fillStyle=col; ctx.textBaseline='middle';
       ctx.fillText(String(i+1), M-4, y+rh/2-6);
       ctx.textBaseline='top';
-      block(ctx, r, M+numW, y, F(46,500), blh, ink(surface), col);
+      block(ctx, r, M+numW, y, F(bs,500), blh, ink(surface), col);
       y += rh + 52;
       if(i<rows.length-1){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
         ctx.beginPath(); ctx.moveTo(M+numW,y-28); ctx.lineTo(W-M,y-28); ctx.stroke(); }

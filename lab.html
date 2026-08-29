@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-4</span>
+  <span style="opacity:.55">Aria Lab v20260829-5</span>
 </div>
 
 <div class="dock" id="dock">
@@ -232,6 +232,8 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   </div>
   <div class="inner">
     <span class="count" id="count"><b>0</b> of 7 saved</span>
+    <button id="shareall">Share all</button>
+    <button id="saveall" class="ghost">Save all</button>
     <button id="dockcap" class="ghost">Copy caption</button>
   </div>
 </div>
@@ -1266,6 +1268,63 @@ async function copyCap(btn){
 }
 $('#copycap').onclick = e => copyCap(e.target);
 $('#dockcap').onclick = e => copyCap(e.target);
+
+/* ---- share and save-all --------------------------------------------------
+   On a phone, sharing seven File objects opens the native sheet: gallery,
+   WhatsApp, Instagram, one gesture. Where that is unsupported, a ZIP with the
+   caption inside is the honest fallback. Both respect the review gate — a
+   bundle is a publish-shaped act. */
+function dataURLtoBlob(u){
+  const [h, b64] = u.split(',');
+  const mime = h.match(/data:(.*?);/)[1];
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+function gateOK(){
+  if($('#gate').checked) return true;
+  $('#gatebox').scrollIntoView({ behavior:'smooth', block:'center' });
+  return false;
+}
+function allFiles(){
+  const sl = slug(DOC.topic);
+  return DOC.slides.map((s,i) => new File(
+    [dataURLtoBlob(imgURL[i] || renderSlide(s,i,DOC.slides.length).toDataURL('image/png'))],
+    `${sl}-${String(i+1).padStart(2,'0')}.png`, { type:'image/png' }));
+}
+async function shareAll(btn){
+  if(!DOC || !gateOK()) return;
+  const files = allFiles();
+  if(navigator.canShare && navigator.canShare({ files })){
+    try{ await navigator.share({ files, title: DOC.topic }); }catch(_){}
+  } else saveZip(btn);
+}
+async function saveZip(btn){
+  if(!DOC || !gateOK()) return;
+  const label = btn.textContent; btn.textContent = 'Packing…'; btn.disabled = true;
+  try{
+    if(!window.JSZip) await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = res; s.onerror = rej; document.body.appendChild(s);
+    });
+    const zip = new JSZip();
+    allFiles().forEach(f => zip.file(f.name, f));
+    zip.file('caption.txt', $('#capbox').textContent);
+    const blob = await zip.generateAsync({ type:'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = slug(DOC.topic) + '.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){
+    $('#err').textContent = 'Could not build the bundle: ' + e.message;
+    show($('#err'), true);
+  }
+  btn.textContent = label; btn.disabled = false;
+}
+$('#shareall').onclick = e => shareAll(e.target);
+$('#saveall').onclick = e => saveZip(e.target);
+
 </script>
 </body>
 </html>

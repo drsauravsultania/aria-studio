@@ -1,51 +1,92 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Studio Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
-<style>:root{--brand:#056535;--line:#DED8CB;--bg:#F6F3EC}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#10201A;
-font:17px/1.5 'Mukta',sans-serif;padding:22px 16px}main{max-width:640px;margin:0 auto}
-h1{color:var(--brand)}input{width:100%;border:1px solid var(--line);border-radius:10px;
-padding:12px;font:inherit}button{padding:12px 20px;border:0;border-radius:10px;
-background:var(--brand);color:#fff;font:600 16px 'Mukta';cursor:pointer}
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
-.card b{color:var(--brand)}.ok{color:#3A7D44;font-weight:700}
-small{color:#68706A;display:block}</style></head><body><main>
-<h1>Doctor approvals</h1>
-<p>Verify the credential and registration number before approving — this is the
-clinical gate. The passphrase stays only in this tab.</p>
-<input id="sec" type="password" placeholder="Admin passphrase">
-<div style="height:10px"></div>
-<button onclick="load()">Show pending doctors</button>
-<div id="list"></div>
+<title>Carousel Studio · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#056535;--mid:#08A858;--ink:#10201A;--mut:#68706A;
+--line:#E4DFD4;--bg:#F6F3EC;--card:#FFFFFF}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font:16px/1.55 'Mukta',sans-serif}
+header{background:linear-gradient(135deg,#04502A,var(--brand));color:#fff;
+padding:26px 20px 22px}
+header .in{max-width:720px;margin:0 auto}
+header h1{margin:0;font-size:24px;font-weight:800;letter-spacing:.2px}
+header p{margin:4px 0 0;opacity:.85;font-size:14.5px}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+.bar{display:flex;gap:10px;margin:6px 0 4px}
+input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 15px;
+font:inherit;background:#fff}
+input:focus{outline:2px solid var(--mid);border-color:transparent}
+button{border:0;border-radius:12px;padding:13px 22px;background:var(--brand);
+color:#fff;font:700 15.5px 'Mukta';cursor:pointer;white-space:nowrap}
+button:hover{background:#04502A}
+.hint{color:var(--mut);font-size:13.5px;margin:6px 2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+padding:18px 20px;margin:16px 0;box-shadow:0 1px 3px rgba(16,32,26,.05)}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.nm{font-size:19px;font-weight:800}
+.pill{font:700 12px 'Mukta';letter-spacing:.4px;text-transform:uppercase;
+padding:5px 12px;border-radius:99px;flex:none}
+.pending{background:#FDF0E0;color:#8A5A08}
+.live{background:#E3F0E7;color:var(--brand)}
+.meta{color:var(--mut);font-size:14px;margin-top:4px}
+.meta b{color:var(--ink);font-weight:600}
+.reg{font-family:ui-monospace,monospace;font-size:13px;background:var(--bg);
+border:1px solid var(--line);border-radius:8px;padding:2px 8px;display:inline-block;margin-top:6px}
+.act{margin-top:14px;display:flex;gap:10px;align-items:center}
+.link{font-size:13.5px;color:var(--brand);word-break:break-all}
+.empty{color:var(--mut);text-align:center;padding:40px 0}
+</style></head><body>
+<header><div class="in">
+  <h1>Doctor approvals</h1>
+  <p>Verify name, credential and registration number against the council record
+     before activating. Approval publishes their studio.</p>
+</div></header>
+<main>
+  <div class="bar">
+    <input id="sec" type="password" placeholder="Admin passphrase" autocomplete="current-password">
+    <button onclick="load()">Show doctors</button>
+  </div>
+  <p class="hint">The passphrase stays in this tab only.</p>
+  <div id="list"></div>
+</main>
 <script>
 const API='https://img.ariahealthcare.in';
 const H=()=>({'x-admin':document.getElementById('sec').value,'content-type':'application/json'});
 async function load(){
   const L=document.getElementById('list');
-  L.innerHTML='<p>Loading…</p>';
+  L.innerHTML='<p class="empty">Loading…</p>';
   try{
-  const r=await fetch(API+'/pending',{headers:H()});
-  const o=await r.json();
-  const L=document.getElementById('list');
-  if(o.error){L.innerHTML='<p><b>'+o.error+'</b></p>';return}
-  if(!o.brands.length){L.innerHTML='<p>No registrations yet.</p>';return}
-  L.innerHTML=o.brands.map(b=>`
-   <div class="card">
-     <b>${b.name}</b> — ${b.status==='approved'?'<span class="ok">approved</span>':'pending'}
-     <small>${b.credential||''}</small>
-     <small>${b.handle||''} · ${b.reg||'no reg. number'} · ${(b.allowedDepartments||[]).join(', ')}</small>
-     <small>Registered ${b.registered||''}</small>
-     ${b.status!=='approved'
-       ?`<div style="margin-top:10px"><button onclick="approve('${b.key}')">Approve ${b.name}</button></div>`
-       :`<small>Link: studio.ariahealthcare.in/lab.html?brand=${b.key}</small>`}
-   </div>`).join('');
-  }catch(e){ L.innerHTML='<p><b>Could not reach the server: '+e.message+'</b></p>'; }
+    const r=await fetch(API+'/pending',{headers:H()});
+    const o=await r.json();
+    if(o.error){L.innerHTML='<p class="empty"><b>'+o.error+'</b></p>';return}
+    if(!o.brands.length){L.innerHTML='<p class="empty">No registrations yet.</p>';return}
+    L.innerHTML=o.brands.map(b=>{
+      const live=b.status==='approved';
+      return `<div class="card">
+        <div class="row">
+          <div>
+            <div class="nm">${b.name||''}</div>
+            <div class="meta">${b.credential||''}</div>
+            <div class="meta"><b>${b.handle||''}</b> · ${(b.allowedDepartments||[]).join(', ')||'—'}</div>
+            <span class="reg">${b.reg||'no registration number'}</span>
+            <div class="meta">Registered ${ (b.registered||'').slice(0,10) }</div>
+          </div>
+          <span class="pill ${live?'live':'pending'}">${live?'Live':'Pending'}</span>
+        </div>
+        <div class="act">
+          ${live
+            ? `<span class="link">studio.ariahealthcare.in/lab.html?brand=${b.key}</span>`
+            : `<button onclick="approve('${b.key}')">Approve & publish</button>`}
+        </div>
+      </div>`;}).join('');
+  }catch(e){L.innerHTML='<p class="empty"><b>Could not reach the server: '+e.message+'</b></p>';}
 }
 async function approve(key){
-  const r=await fetch(API+'/approve',{method:'POST',headers:H(),
-    body:JSON.stringify({key})});
-  const o=await r.json();
-  if(o.ok) load(); else alert(o.error||'Failed');
+  try{
+    const r=await fetch(API+'/approve',{method:'POST',headers:H(),body:JSON.stringify({key})});
+    const o=await r.json();
+    if(o.ok) load(); else alert(o.error||'Failed');
+  }catch(e){alert(e.message)}
 }
-</script></main></body></html>
+</script></body></html>

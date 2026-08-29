@@ -213,6 +213,16 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 </div>
 
 <script>
+window.addEventListener('error', e => {
+  // A script error used to leave every button silently inert. Surface it: a page
+  // that says what broke is repairable; one that just does nothing is not.
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;padding:12px 16px;'
+    + 'background:#8A4708;color:#fff;font:14px/1.4 sans-serif';
+  d.textContent = 'Something went wrong loading this page. Please tell Saurav: '
+    + (e.message || 'unknown error');
+  document.body && document.body.appendChild(d);
+});
 
 const $ = s => document.querySelector(s);
 const escapeHtml = t => String(t).replace(/[&<>"']/g,
@@ -365,16 +375,16 @@ function rail(ctx, surface, type, i, n){
   draw(0,prog, fill, 3);
   const [cx,cy] = path(prog);
   ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fillStyle=fill; ctx.fill();
-}
+
   // The handle rides in the rail band on every slide. A saved slide travels
   // without its caption, so the account name has to live inside the image or the
   // credit is lost the first time someone forwards one.
   const hf = F(Math.round(W*0.0235), 600);
-  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'top';
   const hy2 = H - RAIL - 2, gp = Math.round(W*0.0235*1.28);
   drawIG(ctx, M, hy2 + 3, gp, mut(surface));
-  ctx.font = hf; ctx.fillStyle = mut(surface);
+  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'top';
   ctx.fillText(BRAND.ig, M + gp + 12, hy2);
+}
 
 
 function footer(ctx, slide, surface, type){

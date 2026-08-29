@@ -778,8 +778,14 @@ function renderSlide(slide, i, n){
     const sl = wrap(ctx, slide.subheadline||'', F(48,500), cw);
     const mp2 = 74;
 
-    const groupH = _eyebrowH() + hl.length*lh2 + 20 + 5 + 40
-                 + sl.length*blh + 78 + mp2;
+    // With an image band above, the region may not hold the sign-off lockup as
+    // well. The lockup is redundant branding then — the header already carries
+    // the logo and name, the footer the legal line and handle — so it yields.
+    const withLock = _eyebrowH() + hl.length*lh2 + 20 + 5 + 40
+                   + sl.length*blh + 78 + mp2;
+    const showLock = withLock <= (bot - top);
+    const groupH = showLock ? withLock
+                 : _eyebrowH() + hl.length*lh2 + 20 + 5 + 40 + sl.length*blh;
     let y = top + Math.max(6, (bot - top - groupH) / 2);
 
     y = eyebrow(ctx, EYEBROW.cta, M, y, surface, type);
@@ -791,6 +797,7 @@ function renderSlide(slide, i, n){
     // ascender of "Aria Healthcare" crossed it. Give the lockup real clearance.
     ctx.strokeStyle = rule(surface); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(M, y+24); ctx.lineTo(W-M, y+24); ctx.stroke();
+    if(!showLock){ footer(ctx, slide, surface, type); rail(ctx, surface, type, i, n); return c; }
     const ly = y + 78;
     let x2 = M;
     if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }

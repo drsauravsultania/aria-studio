@@ -333,6 +333,19 @@ function eyebrow(ctx, text, x, y, surface, type){
   return y + 40;
 }
 
+function drawIG(ctx, x, y, s, colour){
+  const w = Math.max(2, Math.round(s*0.088));
+  ctx.save(); ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = w;
+  const r = s*0.26;
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+s, y, x+s, y+s, r);
+  ctx.arcTo(x+s, y+s, x, y+s, r); ctx.arcTo(x, y+s, x, y, r);
+  ctx.arcTo(x, y, x+s, y, r); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.22, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s*0.74, y+s*0.26, s*0.055, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
 function rail(ctx, surface, type, i, n){
   const yTop = H - RAIL + 26, yBot = H - 52, prog = (i+1)/n;
   const path = t => { const x = t*W; return [x, yBot - (yBot-yTop)*Math.pow(t,0.55)]; };
@@ -351,10 +364,12 @@ function rail(ctx, surface, type, i, n){
   // The handle rides in the rail band on every slide. A saved slide travels
   // without its caption, so the account name has to live inside the image or the
   // credit is lost the first time someone forwards one.
-  ctx.font = F(Math.round(W*0.0235), 600);
-  ctx.fillStyle = mut(surface);
-  ctx.textBaseline = 'top';
-  ctx.fillText(BRAND.ig, M, H - RAIL - 2);
+  const hf = F(Math.round(W*0.0235), 600);
+  ctx.font = hf; ctx.fillStyle = mut(surface); ctx.textBaseline = 'top';
+  const hy2 = H - RAIL - 2, gp = Math.round(W*0.0235*1.28);
+  drawIG(ctx, M, hy2 + 3, gp, mut(surface));
+  ctx.font = hf; ctx.fillStyle = mut(surface);
+  ctx.fillText(BRAND.ig, M + gp + 12, hy2);
 
 
 function footer(ctx, slide, surface, type){

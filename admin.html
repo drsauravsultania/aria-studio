@@ -22,6 +22,9 @@ clinical gate. The passphrase stays only in this tab.</p>
 const API='https://img.ariahealthcare.in';
 const H=()=>({'x-admin':document.getElementById('sec').value,'content-type':'application/json'});
 async function load(){
+  const L=document.getElementById('list');
+  L.innerHTML='<p>Loading…</p>';
+  try{
   const r=await fetch(API+'/pending',{headers:H()});
   const o=await r.json();
   const L=document.getElementById('list');
@@ -37,6 +40,7 @@ async function load(){
        ?`<div style="margin-top:10px"><button onclick="approve('${b.key}')">Approve ${b.name}</button></div>`
        :`<small>Link: studio.ariahealthcare.in/lab.html?brand=${b.key}</small>`}
    </div>`).join('');
+  }catch(e){ L.innerHTML='<p><b>Could not reach the server: '+e.message+'</b></p>'; }
 }
 async function approve(key){
   const r=await fetch(API+'/approve',{method:'POST',headers:H(),

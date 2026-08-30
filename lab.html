@@ -146,8 +146,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
       <p class="brandline" id="brandline"></p>
     </div>
   </div>
-  <p class="sub">Paediatric · Neonatal · Surgical Care — Deoghar<br>
-     <span class="hi">बच्चों के लिए स्वास्थ्य जानकारी</span></p>
+  <p class="sub" id="subline"></p>
 
   <!-- 1 -->
   <div class="card" id="c1">
@@ -213,11 +212,9 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 </div>
 
 <div class="foot">
-  <b>Aria Healthcare</b> — a children's hospital in Deoghar.<br>
-  Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
-  OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
+  <span id="footabout"></span>
   <span id="footident"></span>
-  <span style="opacity:.55">Aria Lab v20260830-16</span>
+  <br><span style="opacity:.55">Aria Lab v20260830-17</span>
 </div>
 
 <div class="dock" id="dock">
@@ -260,7 +257,7 @@ const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
 const BRAND = {
   name:'Aria Healthcare', tagline:'Founded on Faith',
   credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
-  site:'', ig:'', reg:'', mark:'', avatarUrl:''
+  site:'', ig:'', reg:'', mark:'', avatarUrl:'', logoUrl:'', sub:'', about:''
 };
 const LEGAL = () => 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
 
@@ -1201,9 +1198,23 @@ $('#gen').onclick = () => {
 // another doctor's header is not.
 const paintChrome = () => {
   const mk = document.getElementById('pagemark');
-  if(mk) mk.textContent = BRAND.mark || '';
+  if(mk){
+    const src = BRAND.logoUrl || BRAND.avatarUrl;
+    if(src){
+      mk.textContent = '';
+      const im = document.createElement('img');
+      im.src = src; im.alt = BRAND.name || '';
+      im.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%';
+      im.onerror = () => { mk.textContent = BRAND.mark || ''; im.remove(); };
+      mk.appendChild(im);
+    } else mk.textContent = BRAND.mark || '';
+  }
   const bl = document.getElementById('brandline');
   if(bl) bl.textContent = [BRAND.name, BRAND.tagline].filter(Boolean).join(' \u00b7 ');
+  const sb = document.getElementById('subline');
+  if(sb) sb.innerHTML = BRAND.sub || '';
+  const fa = document.getElementById('footabout');
+  if(fa) fa.innerHTML = BRAND.about || '';
   const ft = document.getElementById('footident');
   if(ft){
     const bits = [];
@@ -1261,6 +1272,9 @@ const paintChrome = () => {
       BRAND.site = 'ariahealthcare.in'; BRAND.ig = '@drsonaliped_ariahealthcare';
       BRAND.reg = 'Reg. No. 202/2035000530 \u00b7 Clinical Establishments Act, 2010';
       BRAND.mark = 'A';
+      BRAND.logoUrl = 'https://ariahealthcare.in/img/logo.png';
+      BRAND.sub = 'Paediatric · Neonatal · Surgical Care — Deoghar<br><span class="hi">बच्चों के लिए स्वास्थ्य जानकारी</span>';
+      BRAND.about = '<b>Aria Healthcare</b> — a children\'s hospital in Deoghar.<br>Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>';
       paintChrome();
     }
     const r = await fetch(IMG_API + '/health');

@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260830-18</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-19</span>
 </div>
 
 <div class="dock" id="dock">
@@ -611,25 +611,39 @@ function tlH(ctx,pts,surface,y){
 }
 
 function tlV(ctx,pts,surface,y){
-  const rx = M+13, row = 86;
-  const top = y+row/2, bot = y+row*(pts.length-1)+row/2;
-  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
-  ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
+  // Labels wrap at the width that actually remains, and each row grows to
+  // hold its lines. The old fixed-86px, single-fillText version ran long
+  // labels straight off the right edge -- caught by the harness's margin
+  // test on the 30 Aug clipping strings, which are now a fixture.
+  const rx = M+13, minRow = 86, lh = 36;
   ctx.font=F(46,700);
   const atW = Math.max(...pts.map(p=>ctx.measureText(p.at||'').width)) + 30;
+  const lx = rx+34+atW, lw = W - M - lx;
+  const rows = pts.map(p => {
+    const lines = p.label ? wrap(ctx, p.label, F(27,500), lw) : [];
+    return { p, lines, h: Math.max(minRow, lines.length*lh + 40) };
+  });
+  const total = rows.reduce((s,r)=>s+r.h, 0);
+  const top = y + rows[0].h/2, bot = y + total - rows[rows.length-1].h/2;
+  ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
   ctx.textBaseline='middle';
-  pts.forEach((p,i)=>{
-    const cy = y + i*row + row/2;
+  let ry = y;
+  for(const {p, lines, h} of rows){
+    const cy = ry + h/2;
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
       ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
-    if(p.label){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
-      ctx.fillText(p.label, rx+34+atW, cy); }
-  });
+    if(lines.length){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+      const ly0 = cy - (lines.length-1)*lh/2;
+      lines.forEach((ln,j)=> drawLine(ctx, ln, lx, ly0 + j*lh, F(27,500), mut(surface), acc(surface,'')));
+    }
+    ry += h;
+  }
   ctx.textBaseline='top';
-  return bot+56;
+  return y + total + 56;
 }
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

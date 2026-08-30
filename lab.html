@@ -217,7 +217,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
   OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
   <span id="footident"></span>
-  <span style="opacity:.55">Aria Lab v20260830-15</span>
+  <span style="opacity:.55">Aria Lab v20260830-16</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1196,6 +1196,24 @@ $('#gen').onclick = () => {
   startJob('/carousel', { topic, department: $('#dept').value, brand: BRAND_KEY });
 };
 
+// Chrome is data now. Every identity element reads BRAND at runtime and
+// prints nothing when a field is absent -- a blank header is correct,
+// another doctor's header is not.
+const paintChrome = () => {
+  const mk = document.getElementById('pagemark');
+  if(mk) mk.textContent = BRAND.mark || '';
+  const bl = document.getElementById('brandline');
+  if(bl) bl.textContent = [BRAND.name, BRAND.tagline].filter(Boolean).join(' \u00b7 ');
+  const ft = document.getElementById('footident');
+  if(ft){
+    const bits = [];
+    if(BRAND.ig) bits.push('<a href="https://instagram.com/' +
+      encodeURIComponent(BRAND.ig.replace(/^@/,'')) + '">' + esc(BRAND.ig) + '</a>');
+    if(BRAND.site) bits.push('<a href="https://' + esc(BRAND.site) + '">' + esc(BRAND.site) + '</a>');
+    ft.innerHTML = bits.join(' \u00b7 ') + (BRAND.reg ? '<br>' + esc(BRAND.reg) : '');
+  }
+};
+
 // the department list is the Worker's, not the page's — one catalogue,
 // read by every surface that will ever exist
 (async () => {
@@ -1205,23 +1223,6 @@ $('#gen').onclick = () => {
       if(rb.ok){
         BRAND_INFO = await rb.json();
         const h = document.querySelector('h1');
-        // Chrome is data now. Every identity element reads BRAND at runtime and
-        // prints nothing when a field is absent -- a blank header is correct,
-        // another doctor's header is not.
-        window.__paintChrome = () => {
-          const mk = document.getElementById('pagemark');
-          if(mk) mk.textContent = BRAND.mark || '';
-          const bl = document.getElementById('brandline');
-          if(bl) bl.textContent = [BRAND.name, BRAND.tagline].filter(Boolean).join(' \u00b7 ');
-          const ft = document.getElementById('footident');
-          if(ft){
-            const bits = [];
-            if(BRAND.ig) bits.push('<a href="https://instagram.com/' +
-              encodeURIComponent(BRAND.ig.replace(/^@/,'')) + '">' + esc(BRAND.ig) + '</a>');
-            if(BRAND.site) bits.push('<a href="https://' + esc(BRAND.site) + '">' + esc(BRAND.site) + '</a>');
-            ft.innerHTML = bits.join(' \u00b7 ') + (BRAND.reg ? '<br>' + esc(BRAND.reg) : '');
-          }
-        };
         // The slides must wear the doctor, not the house. Overwrite the page
         // brand before anything renders; personal mode drops the logo and the
         // institutional lockup entirely.
@@ -1250,12 +1251,8 @@ $('#gen').onclick = () => {
           BRAND.credential = BRAND_INFO.credential || BRAND.credential;
           if(BRAND_INFO.tagline) BRAND.tagline = BRAND_INFO.tagline;
         }
-        // esc(): the credential is stranger-supplied via /onboard.
-        if(h && BRAND_INFO.credential)
-          h.insertAdjacentHTML('afterend',
-            '<p style="margin:2px 0 0;color:var(--brand);font-weight:700">Writing as ' +
-            esc(BRAND_INFO.credential) + '</p>');
-        window.__paintChrome();
+        // The brandline carries the stripped credential; no second insert.
+        paintChrome();
       }
     } else {
       // The house brand: no fetch, but the chrome is still data.
@@ -1264,7 +1261,7 @@ $('#gen').onclick = () => {
       BRAND.site = 'ariahealthcare.in'; BRAND.ig = '@drsonaliped_ariahealthcare';
       BRAND.reg = 'Reg. No. 202/2035000530 \u00b7 Clinical Establishments Act, 2010';
       BRAND.mark = 'A';
-      window.__paintChrome();
+      paintChrome();
     }
     const r = await fetch(IMG_API + '/health');
     const out = await r.json();

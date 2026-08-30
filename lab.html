@@ -140,11 +140,10 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="wrap">
 
   <div class="top">
-    <img class="mark" src="https://ariahealthcare.in/img/logo.png"
-         alt="Aria Healthcare" onerror="this.outerHTML='<div class=&quot;mark fb&quot;>A</div>'">
+    <div class="mark fb" id="pagemark"></div>
     <div>
       <h1>Carousel Lab</h1>
-      <p class="brandline">Aria Healthcare · Founded on Faith</p>
+      <p class="brandline" id="brandline"></p>
     </div>
   </div>
   <p class="sub">Paediatric · Neonatal · Surgical Care — Deoghar<br>
@@ -217,10 +216,8 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <b>Aria Healthcare</b> — a children's hospital in Deoghar.<br>
   Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
   OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
-  <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
-  <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
-  Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260830-13</span>
+  <span id="footident"></span>
+  <span style="opacity:.55">Aria Lab v20260830-14</span>
 </div>
 
 <div class="dock" id="dock">
@@ -263,9 +260,7 @@ const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
 const BRAND = {
   name:'Aria Healthcare', tagline:'Founded on Faith',
   credential:'Dr Sonali Verma · Paediatrics & Paediatric Endocrinology',
-  site:'ariahealthcare.in', 
-  ig:'@drsonaliped_ariahealthcare',
-  reg:'Reg. No. 202/2035000530', mark:'A'
+  site:'', ig:'', reg:'', mark:'', avatarUrl:''
 };
 const LEGAL = () => 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
 
@@ -279,7 +274,7 @@ let logo = null;
 const tryLogo = () => new Promise(res => {
   const i = new Image(); i.crossOrigin = 'anonymous';
   i.onload = () => res(i); i.onerror = () => res(null);
-  i.src = 'https://ariahealthcare.in/img/logo.png';
+  i.src = (BRAND_KEY === 'aria') ? 'https://ariahealthcare.in/img/logo.png' : '';
 });
 
 const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : s==='photo'?'#F6F3EC' : P.gradInk;
@@ -1210,6 +1205,23 @@ $('#gen').onclick = () => {
       if(rb.ok){
         BRAND_INFO = await rb.json();
         const h = document.querySelector('h1');
+        // Chrome is data now. Every identity element reads BRAND at runtime and
+        // prints nothing when a field is absent -- a blank header is correct,
+        // another doctor's header is not.
+        window.__paintChrome = () => {
+          const mk = document.getElementById('pagemark');
+          if(mk) mk.textContent = BRAND.mark || '';
+          const bl = document.getElementById('brandline');
+          if(bl) bl.textContent = [BRAND.name, BRAND.tagline].filter(Boolean).join(' \u00b7 ');
+          const ft = document.getElementById('footident');
+          if(ft){
+            const bits = [];
+            if(BRAND.ig) bits.push('<a href="https://instagram.com/' +
+              encodeURIComponent(BRAND.ig.replace(/^@/,'')) + '">' + esc(BRAND.ig) + '</a>');
+            if(BRAND.site) bits.push('<a href="https://' + esc(BRAND.site) + '">' + esc(BRAND.site) + '</a>');
+            ft.innerHTML = bits.join(' \u00b7 ') + (BRAND.reg ? '<br>' + esc(BRAND.reg) : '');
+          }
+        };
         // The slides must wear the doctor, not the house. Overwrite the page
         // brand before anything renders; personal mode drops the logo and the
         // institutional lockup entirely.
@@ -1220,8 +1232,16 @@ $('#gen').onclick = () => {
         if(BRAND_INFO.brandMode === 'personal'){
           BRAND.name = BRAND_INFO.name;
           const c = BRAND_INFO.credential || '';
-          BRAND.credential = c.includes('\u00b7')
-            ? c.split('\u00b7').slice(1).join('\u00b7').trim() : c;
+          // The name must not appear twice. Strip a leading brand-name match
+          // whatever separator follows it, then fall back to the dot split.
+          const _n = (BRAND_INFO.name || '').trim();
+          let _c = c.trim();
+          if(_n && _c.toLowerCase().startsWith(_n.toLowerCase()))
+            _c = _c.slice(_n.length).replace(/^[\s\u00b7:,-]+/, '');
+          else if(_c.includes('\u00b7'))
+            _c = _c.split('\u00b7').slice(1).join('\u00b7').trim();
+          BRAND.credential = _c;
+          BRAND.avatarUrl = BRAND_INFO.avatarUrl || '';
           BRAND.tagline = '';
           BRAND.mark = (BRAND_INFO.name || 'D').replace(/^Dr\.?\s*/i,'')[0] || 'D';
           window.__noLogo = true; logo = null;
@@ -1230,11 +1250,21 @@ $('#gen').onclick = () => {
           BRAND.credential = BRAND_INFO.credential || BRAND.credential;
           if(BRAND_INFO.tagline) BRAND.tagline = BRAND_INFO.tagline;
         }
+        // esc(): the credential is stranger-supplied via /onboard.
         if(h && BRAND_INFO.credential)
           h.insertAdjacentHTML('afterend',
             '<p style="margin:2px 0 0;color:var(--brand);font-weight:700">Writing as ' +
-            BRAND_INFO.credential + '</p>');
+            esc(BRAND_INFO.credential) + '</p>');
+        window.__paintChrome();
       }
+    } else {
+      // The house brand: no fetch, but the chrome is still data.
+      BRAND.name = 'Aria Healthcare'; BRAND.tagline = 'Founded on Faith';
+      BRAND.credential = 'Dr Sonali Verma \u00b7 Paediatrics & Paediatric Endocrinology';
+      BRAND.site = 'ariahealthcare.in'; BRAND.ig = '@drsonaliped_ariahealthcare';
+      BRAND.reg = 'Reg. No. 202/2035000530 \u00b7 Clinical Establishments Act, 2010';
+      BRAND.mark = 'A';
+      window.__paintChrome();
     }
     const r = await fetch(IMG_API + '/health');
     const out = await r.json();

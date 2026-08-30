@@ -26,7 +26,7 @@ body{margin:0;background:var(--paper);color:var(--ink);
 
 /* header */
 .top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
-.mark{width:46px;height:46px;flex:none;object-fit:contain;border-radius:10px}
+.mark{width:46px;height:46px;flex:none;object-fit:cover;border-radius:50%}
 .mark.fb{background:var(--brand);display:grid;place-items:center;
   color:var(--paper);font-weight:800;font-size:23px}
 .brandline{margin:1px 0 0;font-size:13.5px;color:var(--brand);font-weight:600;
@@ -217,7 +217,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   Sarwan Road, near Deewan Baba Gali, Jhoushagari, Deoghar 814112<br>
   OPD Mon–Sat 10–2 &amp; 5–8 · Sun 10–2 · Emergency open 24×7<br>
   <span id="footident"></span>
-  <span style="opacity:.55">Aria Lab v20260830-14</span>
+  <span style="opacity:.55">Aria Lab v20260830-15</span>
 </div>
 
 <div class="dock" id="dock">
@@ -359,7 +359,7 @@ function header(ctx, surface, i, n, band){
   if(logo){ ctx.drawImage(logo, x, y, mp, mp); x += mp + 22; }
   else{
     ctx.fillStyle = acc(surface,'');
-    roundRect(ctx, x, y, mp, mp, 14); ctx.fill();
+    roundRect(ctx, x, y, mp, mp, mp/2); ctx.fill();
     // Badge ink must contrast the badge FILL, not the slide surface. The old
     // ternary had no 'grad' branch and fell through to P.brand -- the same
     // green as the fill -- so ring and letter vanished on correction/cta.
@@ -368,7 +368,7 @@ function header(ctx, surface, i, n, band){
     const _fill = acc(surface,'');
     const _badgeInk = (_fill === P.lime) ? P.ink : P.paper;
     ctx.strokeStyle = _badgeInk;
-    ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
+    ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, (mp-12)/2); ctx.stroke();
     ctx.fillStyle = _badgeInk;
     ctx.font = F(29,800); ctx.textBaseline='middle'; ctx.textAlign='center';
     { const _m = ctx.measureText(BRAND.mark);
@@ -852,7 +852,7 @@ function renderSlide(slide, i, n){
     const ly = y + 78;
     let x2 = M;
     if(logo){ ctx.drawImage(logo, x2, ly, mp2, mp2); x2 += mp2 + 20; }
-    else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,16); ctx.fill();
+    else { ctx.fillStyle=P.brand; roundRect(ctx,x2,ly,mp2,mp2,mp2/2); ctx.fill();
       ctx.fillStyle=P.paper; ctx.font=F(34,800); ctx.textAlign='center';
       ctx.textBaseline='middle'; { const _m2 = ctx.measureText(BRAND.mark);
       ctx.textBaseline='alphabetic';

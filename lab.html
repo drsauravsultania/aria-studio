@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-19</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-20</span>
 </div>
 
 <div class="dock" id="dock">
@@ -501,17 +501,28 @@ function footer(ctx, slide, surface, type){
 }
 
 /* ---- figures -------------------------------------------------------- */
+const _measureCtx = document.createElement('canvas').getContext('2d');
 function figHeight(fig){
   if(!fig) return 0;
   if(fig.type==='scale') return (fig.bands||[]).length*66 + (fig.unit?34:0);
-  const n = (fig.points||[]).length;
-  return n<=3 ? 250 : n*86 + 68;
+  const pts = fig.points||[];
+  // Horizontal layout stays a flat 250; vertical asks the same code that
+  // will draw it.
+  if(pts.length<=3){
+    _measureCtx.font = F(27,500);
+    const step = (W - 2*M - 20) / Math.max(1, pts.length - 1);
+    const widest = Math.max(...pts.map(p => Math.max(
+      _measureCtx.measureText(p.label||'').width,
+      (_measureCtx.font = F(46,700), _measureCtx.measureText(p.at||'').width))));
+    if(widest <= step * 0.94) return 250;
+  }
+  return tlVMeasure(_measureCtx, pts, 1).total + 56;
 }
 
-function drawFigure(ctx, fig, surface, y){
+function drawFigure(ctx, fig, surface, y, maxY){
   if(!fig) return y;
   if(fig.type==='scale') return figScale(ctx, fig, surface, y);
-  return figTimeline(ctx, fig, surface, y);
+  return figTimeline(ctx, fig, surface, y, maxY);
 }
 
 function figScale(ctx, fig, surface, y){
@@ -573,7 +584,7 @@ function figScale(ctx, fig, surface, y){
   return y + bands.length*66;
 }
 
-function figTimeline(ctx, fig, surface, y){
+function figTimeline(ctx, fig, surface, y, maxY){
   const pts = fig.points||[];
   // Three points earn a horizontal line only if their labels actually fit the
   // slots. "Three or fewer stays horizontal" was a flat rule, and it shipped
@@ -586,7 +597,7 @@ function figTimeline(ctx, fig, surface, y){
       (ctx.font = F(46,700), ctx.measureText(p.at||'').width))));
     if(widest <= step * 0.94) return tlH(ctx,pts,surface,y);
   }
-  return tlV(ctx,pts,surface,y);
+  return tlV(ctx,pts,surface,y,maxY);
 }
 
 function tlH(ctx,pts,surface,y){
@@ -610,20 +621,33 @@ function tlH(ctx,pts,surface,y){
   return ly+110;
 }
 
-function tlV(ctx,pts,surface,y){
-  // Labels wrap at the width that actually remains, and each row grows to
-  // hold its lines. The old fixed-86px, single-fillText version ran long
-  // labels straight off the right edge -- caught by the harness's margin
-  // test on the 30 Aug clipping strings, which are now a fixture.
-  const rx = M+13, minRow = 86, lh = 36;
-  ctx.font=F(46,700);
+function tlVMeasure(ctx, pts, scale){
+  // One source of truth for the vertical timeline's geometry. figHeight and
+  // tlV both read this; the old split (fixed estimate vs wrapped reality)
+  // let the figure draw straight through the footer -- TEST 5's first catch.
+  const s = scale || 1;
+  const rx = M+13, minRow = Math.round(86*s), lh = Math.round(36*s);
+  const atF = F(Math.round(46*s),700), lbF = F(Math.round(27*s),500);
+  ctx.font = atF;
   const atW = Math.max(...pts.map(p=>ctx.measureText(p.at||'').width)) + 30;
   const lx = rx+34+atW, lw = W - M - lx;
   const rows = pts.map(p => {
-    const lines = p.label ? wrap(ctx, p.label, F(27,500), lw) : [];
-    return { p, lines, h: Math.max(minRow, lines.length*lh + 40) };
+    const lines = p.label ? wrap(ctx, p.label, lbF, lw) : [];
+    return { p, lines, h: Math.max(minRow, lines.length*lh + Math.round(40*s)) };
   });
-  const total = rows.reduce((s,r)=>s+r.h, 0);
+  return { rows, rx, lx, lh, atF, lbF, s,
+           total: rows.reduce((a,r)=>a+r.h, 0) };
+}
+
+function tlV(ctx,pts,surface,y,maxY){
+  // Fit-before-draw: step the scale down until the figure fits its budget.
+  let m = tlVMeasure(ctx, pts, 1);
+  if(maxY){
+    for(let s = 1; s > 0.68 && y + m.total + 56 > maxY; s -= 0.08)
+      m = tlVMeasure(ctx, pts, s);
+  }
+  const { rows, rx, lx, lh, atF, lbF } = m;
+  const total = m.total;
   const top = y + rows[0].h/2, bot = y + total - rows[rows.length-1].h/2;
   ctx.strokeStyle=rule(surface); ctx.lineWidth=4;
   ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
@@ -635,10 +659,10 @@ function tlV(ctx,pts,surface,y){
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
       ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
-    ctx.font=F(46,700); ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
-    if(lines.length){ ctx.font=F(27,500); ctx.fillStyle=mut(surface);
+    ctx.font=atF; ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
+    if(lines.length){ ctx.font=lbF; ctx.fillStyle=mut(surface);
       const ly0 = cy - (lines.length-1)*lh/2;
-      lines.forEach((ln,j)=> drawLine(ctx, ln, lx, ly0 + j*lh, F(27,500), mut(surface), acc(surface,'')));
+      lines.forEach((ln,j)=> drawLine(ctx, ln, lx, ly0 + j*lh, lbF, mut(surface), acc(surface,'')));
     }
     ry += h;
   }
@@ -747,7 +771,7 @@ function renderSlide(slide, i, n){
     y = eyebrow(ctx, EYEBROW[type], M, y, surface, type);
     y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
     if(bl.length) y = block(ctx, bl, M, y+30, F(48,500), blh, ink(surface), acc(surface,type));
-    if(fig) drawFigure(ctx, fig, surface, y+52);
+    if(fig) drawFigure(ctx, fig, surface, y+52, H - RAIL - 120);
   }
   else if(type==='correction'){
     const fig = slide.figure;
@@ -767,7 +791,7 @@ function renderSlide(slide, i, n){
     let y = top + (fig ? 6 : Math.max(6, (bot - top - totalH) / 2));
     y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
     y = block(ctx, lines, M, y, F(size,800), lh, P.gradInk, P.mid);
-    if(fig) drawFigure(ctx, fig, surface, y + 50);
+    if(fig) drawFigure(ctx, fig, surface, y + 50, H - RAIL - 120);
   }
   else if(type==='steps'){
     // The third disease of the day: this branch drew without measuring, so a

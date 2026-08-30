@@ -220,7 +220,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
   <a href="https://instagram.com/drsonaliped_ariahealthcare">@drsonaliped_ariahealthcare</a> ·
   <a href="https://ariahealthcare.in">ariahealthcare.in</a><br>
   Reg. No. 202/2035000530 · Clinical Establishments Act, 2010<br>
-  <span style="opacity:.55">Aria Lab v20260829-12</span>
+  <span style="opacity:.55">Aria Lab v20260830-13</span>
 </div>
 
 <div class="dock" id="dock">
@@ -365,9 +365,16 @@ function header(ctx, surface, i, n, band){
   else{
     ctx.fillStyle = acc(surface,'');
     roundRect(ctx, x, y, mp, mp, 14); ctx.fill();
-    ctx.strokeStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    // Badge ink must contrast the badge FILL, not the slide surface. The old
+    // ternary had no 'grad' branch and fell through to P.brand -- the same
+    // green as the fill -- so ring and letter vanished on correction/cta.
+    // Fill is green everywhere except alertbg (amber) and photo (lime);
+    // cream reads on green and amber, deep ink reads on lime.
+    const _fill = acc(surface,'');
+    const _badgeInk = (_fill === P.lime) ? P.ink : P.paper;
+    ctx.strokeStyle = _badgeInk;
     ctx.lineWidth = 2; roundRect(ctx, x+6, y+6, mp-12, mp-12, 9); ctx.stroke();
-    ctx.fillStyle = surface==='light'?P.paper:surface==='dark'?P.dark:P.brand;
+    ctx.fillStyle = _badgeInk;
     ctx.font = F(29,800); ctx.textBaseline='middle'; ctx.textAlign='center';
     { const _m = ctx.measureText(BRAND.mark);
       ctx.textBaseline='alphabetic';

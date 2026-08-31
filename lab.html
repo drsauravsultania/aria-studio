@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-23</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-24</span>
 </div>
 
 <div class="dock" id="dock">
@@ -265,12 +265,19 @@ function _h2hsl(hex){ const n=parseInt(hex.slice(1),16), r=(n>>16&255)/255, g=(n
 function _hsl2h(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
   const f=n=>{ const c=l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return Math.round(c*255).toString(16).padStart(2,'0'); };
   return '#'+f(0)+f(8)+f(4); }
-function derivePalette(primary){
-  const [h,s] = _h2hsl(primary); const c=(S,L)=>_hsl2h(h,Math.max(0,Math.min(100,S)),L);
-  return { brand:primary, mid:c(s,46), lime:c(s,64),
-    dark:c(s*0.45,93), darkInk:c(s*0.6,12), darkMut:c(s*0.4,42), darkRule:c(s*0.45,84),
-    gradInk:c(s*0.5,25), gradMut:c(s*0.4,44), gradRule:c(s*0.45,80),
-    gradA:c(s*0.35,96), gradB:c(s*0.45,93), gradC:c(s*0.5,88) };
+function derivePalette(primary, secondary){
+  // primary = the brand's accent hue; secondary (optional) = the chrome hue.
+  // Chrome -- badge, buttons, headline ink, rail -- reads from the secondary
+  // so a loud accent never shouts from every element. With no secondary the
+  // primary is deepened for chrome. Surfaces take the chrome hue, barely.
+  const [h,s] = _h2hsl(primary);
+  const [h2,s2] = secondary ? _h2hsl(secondary) : [h, s];
+  const c=(H,S,L)=>_hsl2h(H,Math.max(0,Math.min(100,S)),L);
+  const chrome = secondary || c(h, s*0.85, 30);
+  return { brand:chrome, mid:c(h,s,46), lime:c(h,s*0.9,62),
+    dark:c(h2,s2*0.18,94), darkInk:c(h2,s2*0.5,12), darkMut:c(h2,s2*0.3,42), darkRule:c(h2,s2*0.25,85),
+    gradInk:c(h2,s2*0.45,22), gradMut:c(h2,s2*0.3,44), gradRule:c(h2,s2*0.2,82),
+    gradA:c(h2,s2*0.12,97), gradB:c(h2,s2*0.18,94), gradC:c(h2,s2*0.25,90) };
 }
 
 const BRAND = {
@@ -1350,7 +1357,7 @@ const paintChrome = () => {
             _c = _c.split('\u00b7').slice(1).join('\u00b7').trim();
           BRAND.credential = _c;
           BRAND.avatarUrl = BRAND_INFO.avatarUrl || '';
-          if(BRAND_INFO.primary){ Object.assign(P, derivePalette(BRAND_INFO.primary));
+          if(BRAND_INFO.primary){ Object.assign(P, derivePalette(BRAND_INFO.primary, BRAND_INFO.secondary));
             const rs = document.documentElement.style;
             rs.setProperty('--brand', P.brand); rs.setProperty('--ok', P.mid); }
           BRAND.tagline = '';

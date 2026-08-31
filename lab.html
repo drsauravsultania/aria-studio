@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-20</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-21</span>
 </div>
 
 <div class="dock" id="dock">
@@ -659,7 +659,14 @@ function tlV(ctx,pts,surface,y,maxY){
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
       ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
-    ctx.font=atF; ctx.fillStyle=col; ctx.fillText(p.at||'', rx+34, cy);
+    // Optical centring: Mukta's em-box middle sits high (Devanagari ascender
+    // room), so 'middle' baseline floats Latin labels above the dot. Centre
+    // the measured ink box instead -- same trick the monogram badge uses.
+    ctx.font=atF; ctx.fillStyle=col;
+    { ctx.textBaseline='alphabetic';   // metrics are baseline-relative: set BEFORE measuring
+      const _a = ctx.measureText(p.at||'');
+      ctx.fillText(p.at||'', rx+34, cy + (_a.actualBoundingBoxAscent - _a.actualBoundingBoxDescent)/2);
+      ctx.textBaseline='middle'; }
     if(lines.length){ ctx.font=lbF; ctx.fillStyle=mut(surface);
       const ly0 = cy - (lines.length-1)*lh/2;
       lines.forEach((ln,j)=> drawLine(ctx, ln, lx, ly0 + j*lh, lbF, mut(surface), acc(surface,'')));

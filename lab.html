@@ -193,6 +193,18 @@ button[disabled]{ filter:none; box-shadow:none; }
   .stagecol{ order:-1; }
   .preview{ padding:10px; }
 }
+/* ---- shell v2: the stage is a card, not a wall ---- */
+.desk{ grid-template-columns:minmax(0,1fr) minmax(0,420px); max-width:1040px; align-items:start; }
+.stagecol{ position:sticky; top:24px; }
+.preview{ padding:10px; }
+.preview canvas{ max-height:none; }
+.letterhead{ padding:18px 0 16px; }
+.letterhead .mark.fb{ background:#fff; color:var(--brand); border:0; }
+.letterhead h1{ font-size:21px; }
+@media (max-width:900px){
+  .desk{ grid-template-columns:1fr; max-width:560px; }
+  .stagecol{ position:static; order:-1; }
+}
 </style>
 </head>
 <body>
@@ -226,9 +238,9 @@ button[disabled]{ filter:none; box-shadow:none; }
 
     <div class="card quietcard" id="c2">
       <h3 class="small">Already have one?</h3>
-      <button class="ghost" id="pick">Open a file from Claude</button>
+      <button class="ghost" id="pick">Open a saved carousel</button>
       <div class="gap"></div>
-      <button class="quiet" id="paste">Paste a carousel</button>
+      <button class="quiet" id="paste">Paste one instead</button>
       <button class="quiet" id="manual">or paste it in the box</button>
       <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
       <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
@@ -276,7 +288,7 @@ button[disabled]{ filter:none; box-shadow:none; }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-27</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-28</span>
 </div>
 
 <div class="dock" id="dock">
@@ -475,7 +487,7 @@ function header(ctx, surface, i, n, band){
   ctx.fillText(BRAND.credential, x, y + 37);
   ctx.font = F(27,600); ctx.textAlign='right'; ctx.fillStyle = mut(surface);
   ctx.textBaseline = 'middle';
-  ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y + mp/2);
+  if(i>=0) ctx.fillText(String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0'), W-M, y + mp/2);
   ctx.textBaseline = 'top';
   ctx.textAlign='left';
   const ry = y + mp + 30;
@@ -1364,7 +1376,7 @@ function drawPreview(){
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,P.gradA); g.addColorStop(1,P.gradC);
   ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-  const ry = header(ctx, 'grad', 0, 7, 0);
+  const ry = header(ctx, 'grad', -1, 7, 0);
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.font = F(58,700); ctx.fillStyle = P.gradInk;
   const lines = wrap(ctx, 'Your next carousel starts here.', F(58,700), W-2*M);

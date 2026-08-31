@@ -170,51 +170,76 @@ button[disabled]{ filter:none; box-shadow:none; }
 .gate.on{ background:rgba(var(--brand-rgb),.06); border-color:rgba(var(--brand-rgb),.35); }
 .slide.saved{ border-color:rgba(var(--brand-rgb),.4); background:rgba(var(--brand-rgb),.03); }
 .msg.good{ background:rgba(var(--brand-rgb),.06); border:1px solid rgba(var(--brand-rgb),.3); color:var(--brand); }
+/* ---- shell: letterhead + two-column desk ---- */
+.letterhead{ background:var(--brand); color:#fff; padding:22px 0 20px; }
+.lh-in{ max-width:1180px; margin:0 auto; padding:0 var(--pad); display:flex; gap:16px; align-items:center; }
+.letterhead .mark.fb{ background:rgba(255,255,255,.16); color:#fff; box-shadow:none;
+  border:1.5px solid rgba(255,255,255,.4); }
+.letterhead .mark img{ background:#fff; }
+.letterhead h1{ margin:0; font-size:23px; font-weight:700; letter-spacing:-.015em; color:#fff; }
+.letterhead .sub{ margin:2px 0 0; font-size:14.5px; color:rgba(255,255,255,.82); font-weight:500; }
+.desk{ max-width:1180px; margin:0 auto; padding:28px var(--pad) 40px;
+  display:grid; grid-template-columns:minmax(0,440px) minmax(0,1fr); gap:28px; align-items:start; }
+.deskcol{ min-width:0; }
+.card h3{ font-size:23px; font-weight:700; letter-spacing:-.015em; margin:0 0 8px; }
+.card h3.small{ font-size:17px; font-weight:600; }
+.quietcard{ background:transparent; border:1px dashed rgba(var(--brand-rgb),.22); box-shadow:none; }
+.preview{ background:#fff; border:1px solid rgba(var(--brand-rgb),.09); border-radius:18px; padding:14px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04), 0 16px 40px -24px rgba(var(--brand-rgb),.22); }
+.preview canvas{ width:100%; height:auto; display:block; border-radius:10px; }
+.stagecol.gone{ display:none; }
+@media (max-width:900px){
+  .desk{ grid-template-columns:1fr; gap:20px; }
+  .stagecol{ order:-1; }
+  .preview{ padding:10px; }
+}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-
-  <div class="top">
+<header class="letterhead">
+  <div class="lh-in">
     <div class="mark fb" id="pagemark"></div>
     <div>
-      <h1>Carousel Lab</h1>
-      <p class="brandline" id="brandline"></p>
+      <h1 id="brandline"></h1>
+      <p class="sub" id="subline"></p>
     </div>
   </div>
-  <p class="sub" id="subline"></p>
+</header>
 
-  <!-- 1 -->
-  <div class="card" id="c1">
-    <p class="eyebrow"><i>1</i> Write it</p>
-    <h3>What should this carousel teach?</h3>
-    <p>Type the topic. The writer checks the Indian guidelines, plans the
-       pictures, and builds all seven slides.</p>
-    <select id="dept" aria-label="Department">
-      <option value="paediatrics">Paediatrics</option>
-    </select>
-    <div class="gap"></div>
-    <input id="topic" type="text" placeholder="e.g. worms and deworming"
-           autocomplete="off">
-    <div class="gap"></div>
-    <button id="gen">Generate the carousel</button>
-    <div class="msg bad hidden" id="generr"></div>
+<div class="desk">
+  <div class="deskcol">
+    <div class="card" id="c1">
+      <h3>What should this carousel teach?</h3>
+      <p>Type the topic. The writer checks the Indian guidelines, plans the
+         pictures, and builds all seven slides.</p>
+      <select id="dept" aria-label="Department">
+        <option value="paediatrics">Paediatrics</option>
+      </select>
+      <div class="gap"></div>
+      <input id="topic" type="text" placeholder="e.g. worms and deworming"
+             autocomplete="off">
+      <div class="gap"></div>
+      <button id="gen">Make the carousel</button>
+      <div class="msg bad hidden" id="generr"></div>
+    </div>
+
+    <div class="card quietcard" id="c2">
+      <h3 class="small">Already have one?</h3>
+      <button class="ghost" id="pick">Open a file from Claude</button>
+      <div class="gap"></div>
+      <button class="quiet" id="paste">Paste a carousel</button>
+      <button class="quiet" id="manual">or paste it in the box</button>
+      <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
+      <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
+      <button id="load" class="ghost hidden">Show me the slides</button>
+      <div class="msg bad hidden" id="err"></div>
+    </div>
   </div>
 
-  <!-- 2: still possible to bring one from Claude -->
-  <div class="card" id="c2">
-    <p class="eyebrow"><i>2</i> Or bring one</p>
-    <button class="ghost" id="pick">Open a file from Claude</button>
-    <div class="gap"></div>
-    <button class="quiet" id="paste">Paste a carousel</button>
-    <button class="quiet" id="manual">or paste it in the box</button>
-    <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
-    <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
-    <button id="load" class="ghost hidden">Show me the slides</button>
-    <div class="msg bad hidden" id="err"></div>
+  <div class="deskcol stagecol">
+    <div class="preview" id="preview"><canvas id="prevcanvas" width="1080" height="1350"></canvas></div>
   </div>
-
 </div>
 
 <div class="wrap hidden" id="stage">
@@ -251,7 +276,7 @@ button[disabled]{ filter:none; box-shadow:none; }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-26</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-27</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1333,6 +1358,23 @@ $('#gen').onclick = () => {
 // Chrome is data now. Every identity element reads BRAND at runtime and
 // prints nothing when a field is absent -- a blank header is correct,
 // another doctor's header is not.
+function drawPreview(){
+  const c = document.getElementById('prevcanvas'); if(!c) return;
+  const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,P.gradA); g.addColorStop(1,P.gradC);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  const ry = header(ctx, 'grad', 0, 7, 0);
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.font = F(58,700); ctx.fillStyle = P.gradInk;
+  const lines = wrap(ctx, 'Your next carousel starts here.', F(58,700), W-2*M);
+  let y = ry + 90; for(const l of lines){ drawLine(ctx, l, M, y, F(58,700), P.gradInk, P.brand); y += 76; }
+  ctx.font = F(30,500); ctx.fillStyle = P.gradMut;
+  ctx.fillText('Seven slides, in your name, in about ninety seconds.', M, y + 18);
+  rail(ctx, 'grad', 'hook', 0, 7);
+  footer(ctx, {}, 'grad', 'hook');
+}
+
 const paintChrome = () => {
   const mk = document.getElementById('pagemark');
   if(mk){
@@ -1355,6 +1397,7 @@ const paintChrome = () => {
   if(sb) sb.innerHTML = BRAND.sub || '';
   const fa = document.getElementById('footabout');
   if(fa) fa.innerHTML = BRAND.about || '';
+  try{ drawPreview(); }catch(_){}
   const ft = document.getElementById('footident');
   if(ft){
     const bits = [];

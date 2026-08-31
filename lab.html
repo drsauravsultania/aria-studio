@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-21</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-22</span>
 </div>
 
 <div class="dock" id="dock">
@@ -251,8 +251,27 @@ const P = {brand:'#056535', mid:'#08A858', lime:'#88C848', alert:'#F89818',
            paper:'#F6F3EC', ink:'#10201A', mut:'#686C68', rule:'#DED8CB',
            dark:'#E3F0E7', darkInk:'#0E281B', darkMut:'#627C6C', darkRule:'#C6DBCD',
            alertBg:'#FDF0E0', alertInk:'#3A220A', alertMut:'#8C6A42',
-           alertRule:'#F0D6B4', gradInk:'#2B4C3A', gradMut:'#5E7A69'};
+           alertRule:'#F0D6B4', gradInk:'#2B4C3A', gradMut:'#5E7A69',
+           gradA:'#EFF7F1', gradB:'#E1F0E7', gradC:'#D3E9DC', gradRule:'#BCD8C7'};
 const W = 1080, H = 1350, M = 80, HEADER = 212, RAIL = 168;
+
+// One primary colour in, the whole brand family out. Aria's hand-tuned greens
+// stay as they are; this runs only when a brand card carries `primary`.
+function _h2hsl(hex){ const n=parseInt(hex.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h = mx===r?((g-b)/d+(g<b?6:0)) : mx===g?((b-r)/d+2) : ((r-g)/d+4); h*=60; }
+  return [h,s*100,l*100]; }
+function _hsl2h(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>{ const c=l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return Math.round(c*255).toString(16).padStart(2,'0'); };
+  return '#'+f(0)+f(8)+f(4); }
+function derivePalette(primary){
+  const [h,s] = _h2hsl(primary); const c=(S,L)=>_hsl2h(h,Math.max(0,Math.min(100,S)),L);
+  return { brand:primary, mid:c(s,46), lime:c(s,64),
+    dark:c(s*0.45,93), darkInk:c(s*0.6,12), darkMut:c(s*0.4,42), darkRule:c(s*0.45,84),
+    gradInk:c(s*0.5,25), gradMut:c(s*0.4,44), gradRule:c(s*0.45,80),
+    gradA:c(s*0.35,96), gradB:c(s*0.45,93), gradC:c(s*0.5,88) };
+}
 
 const BRAND = {
   name:'Aria Healthcare', tagline:'Founded on Faith',
@@ -276,7 +295,7 @@ const tryLogo = () => new Promise(res => {
 
 const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : s==='photo'?'#F6F3EC' : P.gradInk;
 const mut = s => s==='light'?P.mut : s==='dark'?P.darkMut : s==='alertbg'?P.alertMut : s==='photo'?'#D9E4DC' : P.gradMut;
-const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : s==='photo'?'rgba(255,255,255,.35)' : '#BCD8C7';
+const rule = s => s==='light'?P.rule : s==='dark'?P.darkRule : s==='alertbg'?P.alertRule : s==='photo'?'rgba(255,255,255,.35)' : P.gradRule;
 const acc = (s,t) => (t==='red_flags'||s==='alertbg') ? P.alert : s==='photo' ? P.lime : P.brand;
 
 const F = (size, weight) => `${weight} ${size}px Mukta, sans-serif`;
@@ -344,7 +363,7 @@ function bg(ctx, surface){
     // to six soft slides; the argument now sits on a pale wash and the weight
     // comes from the type and the accent, not from the paper.
     const g = ctx.createLinearGradient(0, 0, W*0.55, H);
-    g.addColorStop(0,'#EFF7F1'); g.addColorStop(.55,'#E1F0E7'); g.addColorStop(1,'#D3E9DC');
+    g.addColorStop(0,P.gradA); g.addColorStop(.55,P.gradB); g.addColorStop(1,P.gradC);
     ctx.fillStyle = g;
   } else ctx.fillStyle = surface==='light' ? P.paper
                        : surface==='alertbg' ? P.alertBg : P.dark;
@@ -610,7 +629,7 @@ function tlH(ctx,pts,surface,y){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(px,ly,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(px,ly,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?P.gradB:P.dark; ctx.fill(); }
     ctx.font=F(46,700); ctx.fillStyle=col;
     let w = ctx.measureText(p.at||'').width;
     ctx.fillText(p.at||'', clamp(px-w/2,M,W-M-w), y);
@@ -658,7 +677,7 @@ function tlV(ctx,pts,surface,y,maxY){
     const col = p.alert?P.alert:acc(surface,''); const r = p.alert?15:11;
     ctx.beginPath(); ctx.arc(rx,cy,r,0,7); ctx.fillStyle=col; ctx.fill();
     if(!p.alert){ ctx.beginPath(); ctx.arc(rx,cy,r-5,0,7);
-      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?'#E1F0E7':P.dark; ctx.fill(); }
+      ctx.fillStyle = surface==='light'?P.paper:surface==='alertbg'?P.alertBg:surface==='grad'?P.gradB:P.dark; ctx.fill(); }
     // Optical centring: Mukta's em-box middle sits high (Devanagari ascender
     // room), so 'middle' baseline floats Latin labels above the dot. Centre
     // the measured ink box instead -- same trick the monogram badge uses.
@@ -1302,6 +1321,9 @@ const paintChrome = () => {
             _c = _c.split('\u00b7').slice(1).join('\u00b7').trim();
           BRAND.credential = _c;
           BRAND.avatarUrl = BRAND_INFO.avatarUrl || '';
+          if(BRAND_INFO.primary){ Object.assign(P, derivePalette(BRAND_INFO.primary));
+            const rs = document.documentElement.style;
+            rs.setProperty('--brand', P.brand); rs.setProperty('--ok', P.mid); }
           BRAND.tagline = '';
           BRAND.mark = (BRAND_INFO.name || 'D').replace(/^Dr\.?\s*/i,'')[0] || 'D';
           window.__noLogo = true; logo = null;

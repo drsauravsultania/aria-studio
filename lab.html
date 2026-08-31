@@ -205,22 +205,17 @@ button[disabled]{ filter:none; box-shadow:none; }
   .desk{ grid-template-columns:1fr; max-width:560px; }
   .stagecol{ position:static; order:-1; }
 }
-/* ---- shell v3 ---- */
-.secondline{ margin:14px 2px 0; font-size:15px; color:var(--mut); display:flex;
-  flex-wrap:wrap; align-items:center; gap:6px 10px; }
-.secondline .dim{ opacity:.7; }
+/* ---- the secondary path is a sentence: it wraps like prose, stays put ---- */
+.secondline{ display:block; text-align:left; margin:14px 2px 0;
+  font-size:15px; line-height:1.7; color:var(--mut); }
 button.link{ background:none; border:0; box-shadow:none; padding:0; font:inherit;
   color:var(--brand); font-weight:600; text-decoration:underline;
-  text-underline-offset:3px; text-decoration-thickness:1px; cursor:pointer; }
+  text-underline-offset:3px; text-decoration-thickness:1px; cursor:pointer; display:inline; }
 button.link:hover{ filter:none; transform:none; text-decoration-thickness:2px; }
 button.link.dim{ font-weight:500; color:var(--mut); }
-.secondline textarea, .secondline #load{ flex:0 0 100%; margin-top:10px; }
-/* ---- shell v3.1: the secondary path is a sentence, not a second form ---- */
-.secondline{ text-align:left; justify-content:flex-start; flex-wrap:nowrap; }
-.secondline > span, .secondline > button.link{ flex:0 0 auto; white-space:nowrap; }
-.secondline #src, .secondline #load{ flex:1 0 100%; white-space:normal; }
-#src{ text-align:left; }
-#load{ margin-top:10px; }
+.secondline #src{ display:block; width:100%; margin-top:12px; text-align:left; }
+.secondline #load{ display:block; width:100%; margin-top:10px; }
+.secondline #src.hidden, .secondline #load.hidden{ display:none; }
 </style>
 </head>
 <body>
@@ -304,7 +299,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-31</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-32</span>
 </div>
 
 <div class="dock" id="dock">

@@ -214,7 +214,7 @@ button[disabled]{ filter:none; box-shadow:none; }
     <div class="mark fb" id="pagemark"></div>
     <div>
       <h1 id="brandline"></h1>
-      <p class="sub" id="subline"></p>
+      <p class="sub" id="lhcred"></p>
     </div>
   </div>
 </header>
@@ -288,7 +288,7 @@ button[disabled]{ filter:none; box-shadow:none; }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-28</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-29</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1383,6 +1383,19 @@ function drawPreview(){
   let y = ry + 90; for(const l of lines){ drawLine(ctx, l, M, y, F(58,700), P.gradInk, P.brand); y += 76; }
   ctx.font = F(30,500); ctx.fillStyle = P.gradMut;
   ctx.fillText('Seven slides, in your name, in about ninety seconds.', M, y + 18);
+  // The frame shows its own contents list -- the seven slides this makes.
+  const kinds = ['The hook','The situation','What families do','The evidence',
+                 'What to do instead','When to seek care','In short'];
+  let ky = y + 110;
+  kinds.forEach((k, idx) => {
+    ctx.fillStyle = idx === 5 ? P.alert : P.brand;
+    ctx.beginPath(); ctx.arc(M + 9, ky + 17, 7, 0, 7); ctx.fill();
+    ctx.font = F(34,600); ctx.fillStyle = P.gradInk;
+    ctx.fillText(k, M + 34, ky);
+    ctx.strokeStyle = P.gradRule; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M, ky + 56); ctx.lineTo(W - M, ky + 56); ctx.stroke();
+    ky += 74;
+  });
   rail(ctx, 'grad', 'hook', 0, 7);
   footer(ctx, {}, 'grad', 'hook');
 }
@@ -1403,6 +1416,8 @@ const paintChrome = () => {
       mk.appendChild(im);
     } else mk.textContent = BRAND.mark || '';
   }
+  const lc = document.getElementById('lhcred');
+  if(lc) lc.textContent = BRAND.credential || '';
   const bl = document.getElementById('brandline');
   if(bl) bl.textContent = [BRAND.name, BRAND.tagline].filter(Boolean).join(' \u00b7 ');
   const sb = document.getElementById('subline');

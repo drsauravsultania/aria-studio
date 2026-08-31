@@ -215,6 +215,12 @@ button.link{ background:none; border:0; box-shadow:none; padding:0; font:inherit
 button.link:hover{ filter:none; transform:none; text-decoration-thickness:2px; }
 button.link.dim{ font-weight:500; color:var(--mut); }
 .secondline textarea, .secondline #load{ flex:0 0 100%; margin-top:10px; }
+/* ---- shell v3.1: the secondary path is a sentence, not a second form ---- */
+.secondline{ text-align:left; justify-content:flex-start; flex-wrap:nowrap; }
+.secondline > span, .secondline > button.link{ flex:0 0 auto; white-space:nowrap; }
+.secondline #src, .secondline #load{ flex:1 0 100%; white-space:normal; }
+#src{ text-align:left; }
+#load{ margin-top:10px; }
 </style>
 </head>
 <body>
@@ -298,7 +304,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-30</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-31</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1203,13 +1209,13 @@ const show = (el,on) => el.classList.toggle('hidden', !on);
 function parse(raw){
   const t = String(raw||'').trim();
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Copy the whole block Claude sent, including the first { and the last }.');
+  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Paste the whole block, including the first { and the last }.');
   let doc;
   try { doc = JSON.parse(t.slice(a, b+1)); }
-  catch(_) { throw new Error('Some of the carousel is missing. Go back to Claude, tap copy on the whole block, and try again.'); }
-  if(!Array.isArray(doc.slides)) throw new Error('No slides in that. Copy the block Claude sent, not the message around it.');
+  catch(_) { throw new Error('Part of the carousel is missing. Copy the whole block again and paste it here.'); }
+  if(!Array.isArray(doc.slides)) throw new Error('No slides in that. Paste the carousel block itself, not the text around it.');
   if(doc.slides.map(s=>s.type).join(',') !== REQ.join(','))
-    throw new Error('The slides are out of order. Ask Claude to send the carousel again.');
+    throw new Error('The slides are out of order. Paste the carousel again, or make a new one.');
   return doc;
 }
 
@@ -1556,7 +1562,7 @@ $('#file').onchange = async e => {
     $('#err').textContent = 'That file could not be read. Try the paste option below.';
     show($('#err'), true);
   }
-  b.disabled = false; b.textContent = 'Open the file Claude sent';
+  b.disabled = false; b.textContent = 'Open a saved carousel';
   e.target.value = '';
 };
 

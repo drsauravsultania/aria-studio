@@ -214,7 +214,7 @@ pre.cap{white-space:pre-wrap;font:14.5px/1.6 'Mukta',sans-serif;background:var(-
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-22</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-23</span>
 </div>
 
 <div class="dock" id="dock">
@@ -280,6 +280,9 @@ const BRAND = {
 };
 const LEGAL = () => 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
 
+const EYE = t => t !== 'hook' ? EYEBROW[t]
+  : (/p(a)?ediatric|neonat/i.test((DOC && DOC._meta && DOC._meta.department) || 'Paediatrics')
+     ? 'PARENT EDUCATION' : 'PATIENT EDUCATION');
 const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
   common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',
   steps:'WHAT TO DO INSTEAD', red_flags:'SEEK CARE TODAY', cta:'IN SHORT'};
@@ -523,7 +526,15 @@ function footer(ctx, slide, surface, type){
 const _measureCtx = document.createElement('canvas').getContext('2d');
 function figHeight(fig){
   if(!fig) return 0;
-  if(fig.type==='scale') return (fig.bands||[]).length*66 + (fig.unit?34:0);
+  if(fig.type==='scale'){
+    const bands = fig.bands||[], unit = fig.unit ? 34 : 0;
+    if(!bands.length) return 0;
+    if((fig.ramp || 'up') === 'none') return scaleRows(_measureCtx, bands).total + unit;
+    _measureCtx.font = F(46,600);
+    const widest = Math.max(...bands.map(b => _measureCtx.measureText(b.label||'').width));
+    const barX = M + Math.min(widest + 34, W*0.52), barMax = W - M - barX - W*0.17;
+    return (barMax < W*0.12 ? scaleRows(_measureCtx, bands).total : bands.length*66) + unit;
+  }
   const pts = fig.points||[];
   // Horizontal layout stays a flat 250; vertical asks the same code that
   // will draw it.
@@ -540,8 +551,48 @@ function figHeight(fig){
 
 function drawFigure(ctx, fig, surface, y, maxY){
   if(!fig) return y;
-  if(fig.type==='scale') return figScale(ctx, fig, surface, y);
-  return figTimeline(ctx, fig, surface, y, maxY);
+  const y1 = fig.type==='scale' ? figScale(ctx, fig, surface, y) : figTimeline(ctx, fig, surface, y, maxY);
+  window.__lastFig = { y0: y, y1 };   // harness reads this to scan only the figure's rows
+  return y1;
+}
+
+// Two-column scale table with one source of truth for its geometry. Labels
+// keep the left column; values that fit stay right-aligned as before, values
+// that don't wrap into a right column and the row grows. Both draw and
+// figHeight read scaleRows -- the old pair of copied blocks measured nothing
+// and ran sentence-length values straight into their labels (TEST 6).
+function scaleRows(ctx, bands){
+  const lf = F(46,600), vf = F(44,500), lh = 50, gutter = 34;
+  ctx.font = lf;
+  const labelW = Math.min(Math.max(...bands.map(b => ctx.measureText(b.label||'').width)), (W-2*M)*0.5);
+  const valX = M + labelW + gutter, valW = W - M - valX;
+  const rows = bands.map(b => {
+    const v = String(b.value||'');
+    ctx.font = vf; const vw = v ? ctx.measureText(v).width : 0;
+    const right = v && (labelW + gutter + vw <= W - 2*M);
+    const lines = (v && !right) ? wrap(ctx, v, vf, valW) : [];
+    const h = Math.max(66, (right || !v) ? 66 : lines.length*lh + 20);
+    return { b, v, right, lines, h };
+  });
+  if(rows.some(r => !r.right && r.v)) rows.forEach(r => { if(r.right){ ctx.font = vf;
+    r.right = false; r.lines = wrap(ctx, r.v, vf, valW); r.h = Math.max(66, r.lines.length*lh + 20); } });
+  return { rows, valX, lf, vf, lh, total: rows.reduce((a,r)=>a+r.h, 0) };
+}
+function scaleTable(ctx, bands, surface, y){
+  const { rows, valX, lf, vf, lh } = scaleRows(ctx, bands);
+  let cy = y;
+  rows.forEach((r,i) => {
+    if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
+    ctx.textBaseline='top';
+    ctx.font=lf; ctx.fillStyle = r.b.alert ? P.alert : ink(surface);
+    ctx.fillText(r.b.label||'', M, cy);
+    const vc = r.b.alert ? P.alert : acc(surface,'');
+    if(r.right){ ctx.font=vf; ctx.fillStyle=vc; ctx.fillText(r.v, W-M-ctx.measureText(r.v).width, cy+2); }
+    else r.lines.forEach((ln,j) => drawLine(ctx, ln, valX, cy+2+j*lh, vf, vc, vc));
+    cy += r.h;
+  });
+  return cy;
 }
 
 function figScale(ctx, fig, surface, y){
@@ -556,19 +607,8 @@ function figScale(ctx, fig, surface, y){
   // A ramp claims each band is worse than the last. True for bilirubin or scald
   // temperature; false for a reference range, where it would draw the longest,
   // most orange bar against the healthiest row. Values, not stages: no bars.
-  if(!ramp){
-    bands.forEach((b,i) => {
-      const cy = y + i*66;
-      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
-      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
-      ctx.fillText(b.label||'', M, cy);
-      const v = String(b.value||'');
-      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
-        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
-    });
-    return y + bands.length*66;
-  }
+  if(!ramp) return scaleTable(ctx, bands, surface, y);
+
 
   // Label column was a fixed 30% of the canvas, so "Smiles, plays, wakes easily"
   // ran straight under its own bar. Measure the widest label and give it the room
@@ -577,19 +617,8 @@ function figScale(ctx, fig, surface, y){
   const widest = Math.max(...bands.map(b => ctx.measureText(b.label||'').width));
   const barX = M + Math.min(widest + 34, W*0.52);
   const barMax = W - M - barX - W*0.17;
-  if(barMax < W*0.12){
-    bands.forEach((b,i) => {
-      const cy = y + i*66;
-      if(i){ ctx.strokeStyle=rule(surface); ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
-      ctx.font=F(46,600); ctx.fillStyle = b.alert ? P.alert : ink(surface);
-      ctx.fillText(b.label||'', M, cy);
-      const v = String(b.value||'');
-      if(v){ ctx.font=F(44,500); ctx.fillStyle = b.alert ? P.alert : acc(surface,'');
-        ctx.fillText(v, W-M-ctx.measureText(v).width, cy+2); }
-    });
-    return y + bands.length*66;
-  }
+  if(barMax < W*0.12) return scaleTable(ctx, bands, surface, y);
+
   bands.forEach((b,i) => {
     const t = i/Math.max(1,bands.length-1);
     const col = b.alert ? P.alert : mix(lo, P.alert, t);
@@ -794,7 +823,7 @@ function renderSlide(slide, i, n){
       if(tot <= bot-top || size<=46) break; size-=4;
     }
     let y = top+6;
-    y = eyebrow(ctx, EYEBROW[type], M, y, surface, type);
+    y = eyebrow(ctx, EYE(type), M, y, surface, type);
     y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
     if(bl.length) y = block(ctx, bl, M, y+30, F(48,500), blh, ink(surface), acc(surface,type));
     if(fig) drawFigure(ctx, fig, surface, y+52, H - RAIL - 120);

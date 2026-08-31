@@ -205,6 +205,16 @@ button[disabled]{ filter:none; box-shadow:none; }
   .desk{ grid-template-columns:1fr; max-width:560px; }
   .stagecol{ position:static; order:-1; }
 }
+/* ---- shell v3 ---- */
+.secondline{ margin:14px 2px 0; font-size:15px; color:var(--mut); display:flex;
+  flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.secondline .dim{ opacity:.7; }
+button.link{ background:none; border:0; box-shadow:none; padding:0; font:inherit;
+  color:var(--brand); font-weight:600; text-decoration:underline;
+  text-underline-offset:3px; text-decoration-thickness:1px; cursor:pointer; }
+button.link:hover{ filter:none; transform:none; text-decoration-thickness:2px; }
+button.link.dim{ font-weight:500; color:var(--mut); }
+.secondline textarea, .secondline #load{ flex:0 0 100%; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -236,12 +246,12 @@ button[disabled]{ filter:none; box-shadow:none; }
       <div class="msg bad hidden" id="generr"></div>
     </div>
 
-    <div class="card quietcard" id="c2">
-      <h3 class="small">Already have one?</h3>
-      <button class="ghost" id="pick">Open a saved carousel</button>
-      <div class="gap"></div>
-      <button class="quiet" id="paste">Paste one instead</button>
-      <button class="quiet" id="manual">or paste it in the box</button>
+    <div class="secondline" id="c2">
+      <span>Already have one?</span>
+      <button class="link" id="pick">Open a saved carousel</button>
+      <span class="dim">or</span>
+      <button class="link" id="paste">paste one</button>
+      <button class="link dim" id="manual">in the box</button>
       <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
       <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
       <button id="load" class="ghost hidden">Show me the slides</button>
@@ -288,7 +298,7 @@ button[disabled]{ filter:none; box-shadow:none; }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-29</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-30</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1386,15 +1396,15 @@ function drawPreview(){
   // The frame shows its own contents list -- the seven slides this makes.
   const kinds = ['The hook','The situation','What families do','The evidence',
                  'What to do instead','When to seek care','In short'];
-  let ky = y + 110;
+  let ky = y + 96;
   kinds.forEach((k, idx) => {
     ctx.fillStyle = idx === 5 ? P.alert : P.brand;
     ctx.beginPath(); ctx.arc(M + 9, ky + 17, 7, 0, 7); ctx.fill();
     ctx.font = F(34,600); ctx.fillStyle = P.gradInk;
     ctx.fillText(k, M + 34, ky);
     ctx.strokeStyle = P.gradRule; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(M, ky + 56); ctx.lineTo(W - M, ky + 56); ctx.stroke();
-    ky += 74;
+    if(idx < 6){ ctx.beginPath(); ctx.moveTo(M, ky + 66); ctx.lineTo(W - M, ky + 66); ctx.stroke(); }
+    ky += 92;
   });
   rail(ctx, 'grad', 'hook', 0, 7);
   footer(ctx, {}, 'grad', 'hook');

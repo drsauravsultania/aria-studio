@@ -257,6 +257,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
       <div class="gap"></div>
       <button id="gen">Make the carousel</button>
       <div class="msg bad hidden" id="generr"></div>
+      <p class="secondline hidden" id="freshline"><button class="link" id="fresh">Start a new one</button>&nbsp;<span class="dim">clears the carousel showing below</span></p>
     </div>
 
     <div class="secondline" id="c2">
@@ -309,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260901-38</span>
+  <br><span style="opacity:.55">Aria Lab v20260901-39</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1242,6 +1243,7 @@ async function build(raw){
     ? `Written for ${doc._meta.department} · led by ${doc._meta.sources_lead} · lens: ${doc._meta.angle}`
     : '';
   // Before you approve: the cautions the writer was working under.
+  { const fl = $('#freshline'); if(fl) show(fl, true); }
   const rv = $('#review');
   if(rv){
     const R = doc._review;
@@ -1361,6 +1363,7 @@ async function runTicketed(path, body){
   // A silent long wait is indistinguishable from a hang. Count the seconds on
   // the button, and cut the cord at three minutes rather than forever.
   const t0 = Date.now();
+  show($('#generr'), false);
   PREV.t0 = t0; PREV.topic = (body.topic || '').trim();
   try{ drawPreview(); }catch(_){}
   const tick = setInterval(() => {
@@ -1387,6 +1390,7 @@ async function runTicketed(path, body){
     if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
     clearInterval(tick); clearTimeout(cut);
     localStorage.removeItem('aria_job');
+    show($('#generr'), false);
     try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
     jobUI(false);
     await build(JSON.stringify(out.doc));
@@ -1407,6 +1411,14 @@ async function runTicketed(path, body){
 }
 
 async function startJob(path, body){ return runTicketed(path, body); }
+
+// A saved carousel reappears for 24 hours, so there must be a way out of it
+// that does not depend on knowing what a hard refresh is.
+document.addEventListener('click', e => {
+  if(!e.target || e.target.id !== 'fresh') return;
+  localStorage.removeItem('aria_doc'); localStorage.removeItem('aria_job');
+  location.href = location.pathname + location.search;
+});
 
 // Enter in the topic field is the same as tapping the button.
 document.addEventListener('keydown', e => {
@@ -1601,7 +1613,7 @@ const paintChrome = () => {
     if(out && out.status === 'done' && out.doc){
       localStorage.removeItem('aria_job');
       try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
-      jobUI(false); PREV.t0 = 0; await build(JSON.stringify(out.doc)); return;
+      jobUI(false); PREV.t0 = 0; show($('#generr'), false); await build(JSON.stringify(out.doc)); return;
     }
     if(out && out.error){ break; }
     try{ drawPreview(); }catch(_){}

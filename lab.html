@@ -216,6 +216,11 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 .secondline #src{ display:block; width:100%; margin-top:12px; text-align:left; }
 .secondline #load{ display:block; width:100%; margin-top:10px; }
 .secondline #src.hidden, .secondline #load.hidden{ display:none; }
+/* ---- inline links must beat the base button sizing ---- */
+.secondline button.link{ display:inline !important; width:auto !important;
+  min-width:0 !important; margin:0 !important; padding:0 !important;
+  text-align:left !important; line-height:inherit !important; }
+.secondline{ text-align:left !important; }
 </style>
 </head>
 <body>
@@ -299,7 +304,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-32</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-33</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1204,11 +1209,11 @@ const show = (el,on) => el.classList.toggle('hidden', !on);
 function parse(raw){
   const t = String(raw||'').trim();
   const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Paste the whole block, including the first { and the last }.');
+  if(a === -1 || b === -1) throw new Error('That does not look like a carousel. Copy the whole thing you were given — top to bottom — and paste it again.');
   let doc;
   try { doc = JSON.parse(t.slice(a, b+1)); }
-  catch(_) { throw new Error('Part of the carousel is missing. Copy the whole block again and paste it here.'); }
-  if(!Array.isArray(doc.slides)) throw new Error('No slides in that. Paste the carousel block itself, not the text around it.');
+  catch(_) { throw new Error('Part of it is missing. Select all of the text you were given and paste it again.'); }
+  if(!Array.isArray(doc.slides)) throw new Error('There are no slides in that. Paste the carousel itself, not the message around it.');
   if(doc.slides.map(s=>s.type).join(',') !== REQ.join(','))
     throw new Error('The slides are out of order. Paste the carousel again, or make a new one.');
   return doc;

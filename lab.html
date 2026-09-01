@@ -247,18 +247,14 @@ button.link.dim{ font-weight:500; color:var(--mut); }
       </select>
       <div class="gap"></div>
       <input id="topic" type="text" placeholder="e.g. worms and deworming"
-             autocomplete="off">
+             autocomplete="off" enterkeyhint="go">
       <div class="gap"></div>
       <button id="gen">Make the carousel</button>
       <div class="msg bad hidden" id="generr"></div>
     </div>
 
     <div class="secondline" id="c2">
-      <span>Already have one?</span>
-      <button class="link" id="pick">Open a saved carousel</button>
-      <span class="dim">or</span>
-      <button class="link" id="paste">paste one</button>
-      <button class="link dim" id="manual">in the box</button>
+      <span>Already have one?</span>&nbsp;<button class="link" id="pick">Open a saved carousel</button>&nbsp;<span class="dim">or</span>&nbsp;<button class="link" id="paste">paste one</button>&nbsp;<button class="link dim" id="manual">in the box</button>
       <input type="file" id="file" accept=".json,application/json,text/plain" hidden>
       <textarea id="src" class="hidden" placeholder="Press and hold here, then Paste."></textarea>
       <button id="load" class="ghost hidden">Show me the slides</button>
@@ -305,7 +301,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-35</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-36</span>
 </div>
 
 <div class="dock" id="dock">
@@ -700,7 +696,9 @@ function figScale(ctx, fig, surface, y){
   const lo = surface==='light'?P.brand:P.mid;
   ctx.textBaseline='top';
   if(fig.unit){ ctx.font=F(25,500); ctx.fillStyle=mut(surface);
-    ctx.fillText(fig.unit, M, y-34); }
+    // The unit labels the values, so it sits over them -- right-aligned with
+    // the column it describes, not stranded above the row labels.
+    ctx.textAlign='right'; ctx.fillText(fig.unit, W-M, y-34); ctx.textAlign='left'; }
 
   // A ramp claims each band is worse than the last. True for bilirubin or scald
   // temperature; false for a reference range, where it would draw the longest,
@@ -1383,6 +1381,15 @@ async function runTicketed(path, body){
 }
 
 async function startJob(path, body){ return runTicketed(path, body); }
+
+// Enter in the topic field is the same as tapping the button.
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  const el = document.activeElement;
+  if(!el || el.id !== 'topic') return;
+  e.preventDefault();
+  const b = $('#gen'); if(b && !b.disabled) b.click();
+});
 
 $('#gen').onclick = () => {
   const topic = $('#topic').value.trim();

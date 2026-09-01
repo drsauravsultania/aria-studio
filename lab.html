@@ -222,6 +222,12 @@ button.link.dim{ font-weight:500; color:var(--mut); }
   text-align:left !important; line-height:inherit !important; }
 .secondline{ text-align:left !important; display:flex !important; flex-wrap:nowrap !important; }
 .secondline button.link{ display:inline-block !important; white-space:nowrap !important; }
+#review h4{ margin:0 0 8px; }
+#review .dept{ margin:0 0 10px; font-size:14.5px; }
+#review ul{ margin:0; padding-left:18px; }
+#review li{ margin-bottom:10px; font-size:14.5px; }
+#review li b{ display:block; text-transform:capitalize; margin-bottom:2px; }
+#review li div{ margin-bottom:2px; }
 </style>
 </head>
 <body>
@@ -269,6 +275,8 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 
 <div class="wrap hidden" id="stage">
 
+  <div class="card src hidden" id="review"></div>
+
   <div class="card src" id="srcbox">
     <h4>Where this came from</h4>
     <p id="meta" style="margin:0 0 6px;font-size:13.5px;color:var(--brand);font-weight:600"></p>
@@ -301,7 +309,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-37</span>
+  <br><span style="opacity:.55">Aria Lab v20260901-38</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1233,6 +1241,24 @@ async function build(raw){
   if(m) m.textContent = doc._meta
     ? `Written for ${doc._meta.department} · led by ${doc._meta.sources_lead} · lens: ${doc._meta.angle}`
     : '';
+  // Before you approve: the cautions the writer was working under.
+  const rv = $('#review');
+  if(rv){
+    const R = doc._review;
+    if(R && (R.department || (R.facts && R.facts.length))){
+      let h = '<h4>Before you approve</h4>';
+      if(R.department) h += '<p class="dept">' + esc(R.department) + '</p>';
+      if(R.facts && R.facts.length){
+        h += '<ul>' + R.facts.map(f =>
+          '<li><b>' + esc(f.topic) + '</b>' +
+          f.cautions.map(c => '<div>' + esc(c) + '</div>').join('') +
+          (f.url ? '<div class="acc"><a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.source) + '</a></div>'
+                 : (f.source ? '<div class="acc">' + esc(f.source) + '</div>' : '')) +
+          '</li>').join('') + '</ul>';
+      }
+      rv.innerHTML = h; show(rv, true);
+    } else show(rv, false);
+  }
   const sl = $('#srclist'); sl.innerHTML = '';
   if(doc.sources && doc.sources.length){
     doc.sources.forEach(s=>{

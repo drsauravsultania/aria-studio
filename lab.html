@@ -220,7 +220,8 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 .secondline button.link{ display:inline !important; width:auto !important;
   min-width:0 !important; margin:0 !important; padding:0 !important;
   text-align:left !important; line-height:inherit !important; }
-.secondline{ text-align:left !important; }
+.secondline{ text-align:left !important; display:flex !important; flex-wrap:nowrap !important; }
+.secondline button.link{ display:inline-block !important; white-space:nowrap !important; }
 </style>
 </head>
 <body>
@@ -304,7 +305,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-33</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-34</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1325,7 +1326,7 @@ function jobUI(on, label){
   b.disabled = on;
   b.textContent = on
     ? (label || 'Writing… you can switch apps, it will be here when you return')
-    : 'Generate the carousel';
+    : 'Make the carousel';
 }
 
 async function runTicketed(path, body){
@@ -1336,10 +1337,13 @@ async function runTicketed(path, body){
   // A silent long wait is indistinguishable from a hang. Count the seconds on
   // the button, and cut the cord at three minutes rather than forever.
   const t0 = Date.now();
+  PREV.t0 = t0; PREV.topic = (body.topic || '').trim();
+  try{ drawPreview(); }catch(_){}
   const tick = setInterval(() => {
     const b = $('#gen');
     if(b.disabled) b.textContent =
       'Writing… ' + Math.round((Date.now()-t0)/1000) + 's — you can switch apps';
+    try{ drawPreview(); }catch(_){}
   }, 1000);
   const ctl = new AbortController();
   const cut = setTimeout(() => ctl.abort(), 180000);
@@ -1386,6 +1390,10 @@ $('#gen').onclick = () => {
 // Chrome is data now. Every identity element reads BRAND at runtime and
 // prints nothing when a field is absent -- a blank header is correct,
 // another doctor's header is not.
+// The stream delivers the whole carousel at the end -- there is no per-slide
+// progress to observe, so nothing here pretends there is. Elapsed seconds and
+// the topic are true; the seven names are what's coming, not what's done.
+let PREV = { topic: '', t0: 0 };
 function drawPreview(){
   const c = document.getElementById('prevcanvas'); if(!c) return;
   const ctx = c.getContext('2d');
@@ -1395,15 +1403,20 @@ function drawPreview(){
   const ry = header(ctx, 'grad', -1, 7, 0);
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.font = F(58,700); ctx.fillStyle = P.gradInk;
-  const lines = wrap(ctx, 'Your next carousel starts here.', F(58,700), W-2*M);
+  const working = PREV.t0 > 0;
+  const head = working ? (PREV.topic || 'Your carousel') : 'Your next carousel starts here.';
+  const lines = wrap(ctx, head, F(58,700), W-2*M);
   let y = ry + 90; for(const l of lines){ drawLine(ctx, l, M, y, F(58,700), P.gradInk, P.brand); y += 76; }
   ctx.font = F(30,500); ctx.fillStyle = P.gradMut;
-  ctx.fillText('Seven slides, in your name, in about ninety seconds.', M, y + 18);
+  ctx.fillText(working
+    ? 'Writing \u00b7 ' + Math.round((Date.now()-PREV.t0)/1000) + 's \u00b7 you can leave this page and come back'
+    : 'Seven slides, in your name, in about ninety seconds.', M, y + 18);
   // The frame shows its own contents list -- the seven slides this makes.
   const kinds = ['The hook','The situation','What families do','The evidence',
                  'What to do instead','When to seek care','In short'];
   let ky = y + 96;
   kinds.forEach((k, idx) => {
+    ctx.globalAlpha = working ? 0.45 : 1;
     ctx.fillStyle = idx === 5 ? P.alert : P.brand;
     ctx.beginPath(); ctx.arc(M + 9, ky + 17, 7, 0, 7); ctx.fill();
     ctx.font = F(34,600); ctx.fillStyle = P.gradInk;
@@ -1412,6 +1425,7 @@ function drawPreview(){
     if(idx < 6){ ctx.beginPath(); ctx.moveTo(M, ky + 66); ctx.lineTo(W - M, ky + 66); ctx.stroke(); }
     ky += 92;
   });
+  ctx.globalAlpha = 1;
   rail(ctx, 'grad', 'hook', 0, 7);
   footer(ctx, {}, 'grad', 'hook');
 }

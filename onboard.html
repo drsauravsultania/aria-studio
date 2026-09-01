@@ -38,6 +38,25 @@ disclaimer is built from these answers. Nothing is published without your review
 <input type="file" id="logo" accept="image/*">
 <small>Personal accounts can skip this — slides then carry your name in type, which looks clean and intentional.</small>
 <label>Tagline (optional)</label><input id="tag">
+<label>Country you practise in</label><select id="country">
+<option value="IN">India</option>
+<option value="NG">Nigeria</option>
+<option value="PK">Pakistan</option>
+<option value="BD">Bangladesh</option>
+<option value="LK">Sri Lanka</option>
+<option value="NP">Nepal</option>
+<option value="AE">United Arab Emirates</option>
+<option value="GB">United Kingdom</option>
+<option value="US">United States</option>
+<option value="AU">Australia</option>
+<option value="ZA">South Africa</option>
+<option value="KE">Kenya</option>
+<option value="PH">Philippines</option>
+<option value="MY">Malaysia</option>
+<option value="SG">Singapore</option>
+<option value="OTHER">Somewhere else</option>
+</select><small id="authnote"></small>
+
 <label>City and state</label><input id="city" placeholder="Deoghar, Jharkhand"><small>Feeds seasonal and local writing.</small>
 <label>OPD hours</label><input id="opd" placeholder="Mon–Sat 10–2 & 5–8">
 <label>24×7 emergency at your facility?</label>
@@ -78,7 +97,7 @@ function go(){
     handle:v('ig'),site:v('site'),reg:v('reg'),
     defaultDepartment:(document.querySelector('#deps input:checked')||{value:'general'}).value,
     allowedDepartments:[...document.querySelectorAll('#deps input:checked')].map(c=>c.value),
-    city:v('city'),opd:v('opd'),emergency:v('emg')==='Yes',
+    city:v('city'),country:v('country')||'IN',opd:v('opd'),emergency:v('emg')==='Yes',
     language:v('lang'),avoidTopics:v('ban'),reviewer:v('rev')}};
   const txt=JSON.stringify(entry,null,2);
   document.getElementById('cfg').value=txt;
@@ -101,4 +120,31 @@ function go(){
   document.getElementById('out').style.display='block';
   document.getElementById('out').scrollIntoView({behavior:'smooth'});
 }
-</script></main></body></html>
+</script></main><script>
+// The doctor should know which authority her slides will cite before she
+// registers -- location decides it, so location must state it.
+const AUTH = {
+  IN: 'Indian guidelines first (IAP, IAPS, FOGSI, ICMR, MoHFW), then WHO',
+  NG: 'Nigerian and regional guidance where published, then WHO',
+  PK: 'Pakistani and regional guidance where published, then WHO',
+  BD: 'Bangladeshi and regional guidance where published, then WHO',
+  LK: 'Sri Lankan and regional guidance where published, then WHO',
+  NP: 'Nepali and regional guidance where published, then WHO',
+  AE: 'UAE MoHAP guidance where published, then WHO',
+  GB: 'NICE and RCOG/RCPCH first, then WHO',
+  US: 'AAP, ACOG and their peers first, then WHO',
+  AU: 'RACGP and RCH-type national guidance first, then WHO',
+  ZA: 'South African national guidance where published, then WHO',
+  KE: 'Kenyan national guidance where published, then WHO',
+  PH: 'Philippine national guidance where published, then WHO',
+  MY: 'Malaysian MOH guidance where published, then WHO',
+  SG: 'Singapore MOH guidance where published, then WHO',
+  OTHER: 'WHO, and the major international bodies named explicitly on each slide'
+};
+(function(){
+  const sel = document.getElementById('country'), note = document.getElementById('authnote');
+  const paint = () => { note.textContent = 'Your slides will cite ' + (AUTH[sel.value] || AUTH.OTHER) + '.'; };
+  sel.addEventListener('change', paint); paint();
+})();
+</script>
+</body></html>

@@ -305,7 +305,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-34</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-35</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1363,14 +1363,17 @@ async function runTicketed(path, body){
     if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
     clearInterval(tick); clearTimeout(cut);
     localStorage.removeItem('aria_job');
+    try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
     jobUI(false);
     await build(JSON.stringify(out.doc));
   }catch(e){
     clearInterval(tick); clearTimeout(cut);
-    // A failed ticket must be torn up, or every page load resumes the doomed
-    // job and holds the button hostage — which is exactly what "stuck on both
-    // pages" looked like.
-    localStorage.removeItem('aria_job');
+    // A dropped connection is not a failed job. iOS suspends background tabs
+    // and kills the fetch; the Worker may still finish and cache the result,
+    // so the ticket is kept and polled on the next load. Only a real answer
+    // from the writer tears it up.
+    const dropped = e.name === 'AbortError' || /fetch|network|load failed/i.test(e.message || '');
+    if(!dropped) localStorage.removeItem('aria_job');
     jobUI(false);
     $('#generr').textContent = (e.name === 'AbortError'
       ? 'The writer took over three minutes and was cut off.'
@@ -1536,12 +1539,37 @@ const paintChrome = () => {
   }catch(_){ /* the hardcoded default stands */ }
 })();
 
-(function resume(){
+(async function resume(){
+  // First: a carousel finished earlier is still hers. Show it.
+  try{
+    const d = JSON.parse(localStorage.getItem('aria_doc') || 'null');
+    if(d && d.doc && Date.now() - (d.t||0) < 24*3600*1000){ await build(JSON.stringify(d.doc)); return; }
+  }catch(_){}
+  // Otherwise: an unfinished job is asked about, never restarted.
   let j = null;
   try{ j = JSON.parse(localStorage.getItem('aria_job') || 'null'); }catch(_){}
-  if(j && j.path && j.body && Date.now() - (j.t || 0) < 15 * 60 * 1000)
-    runTicketed(j.path, j.body);
-  else localStorage.removeItem('aria_job');
+  if(!(j && j.body && j.body.ticket && Date.now() - (j.t||0) < 15*60*1000)){
+    localStorage.removeItem('aria_job'); return; }
+  jobUI(true, 'Checking your carousel\u2026');
+  PREV.t0 = j.t; PREV.topic = (j.body.topic || '').trim();
+  try{ drawPreview(); }catch(_){}
+  const until = Date.now() + 180000;
+  while(Date.now() < until){
+    let out = null;
+    try{ const r = await fetch(IMG_API + '/job/' + j.body.ticket); out = await r.json(); }catch(_){}
+    if(out && out.status === 'done' && out.doc){
+      localStorage.removeItem('aria_job');
+      try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
+      jobUI(false); PREV.t0 = 0; await build(JSON.stringify(out.doc)); return;
+    }
+    if(out && out.error){ break; }
+    try{ drawPreview(); }catch(_){}
+    await new Promise(r => setTimeout(r, 3000));
+  }
+  localStorage.removeItem('aria_job'); jobUI(false); PREV.t0 = 0;
+  try{ drawPreview(); }catch(_){}
+  $('#generr').textContent = 'That carousel did not finish. Tap Make the carousel to try again.';
+  show($('#generr'), true);
 })();
 document.addEventListener('visibilitychange', () => {
   // returning to the page checks immediately rather than waiting out the timer

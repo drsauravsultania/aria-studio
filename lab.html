@@ -301,7 +301,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260831-36</span>
+  <br><span style="opacity:.55">Aria Lab v20260831-37</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1534,6 +1534,14 @@ const paintChrome = () => {
     }
     const r = await fetch(IMG_API + '/health');
     const out = await r.json();
+    // The example under the topic box belongs to the department, not to
+    // paediatric surgery -- "worms and deworming" on a fertility page was
+    // the tell that this was hardcoded.
+    const PH = out.placeholders || {};
+    const setPH = () => { const el = $('#topic'), k = $('#dept').value;
+      if(el) el.placeholder = PH[k] ? 'e.g. ' + PH[k] : 'type any topic you explain often'; };
+    $('#dept').addEventListener('change', setPH);
+    setTimeout(setPH, 0);
     if(BRAND_INFO && BRAND_INFO.allowedDepartments && out.departments)
       out.departments = Object.fromEntries(Object.entries(out.departments)
         .filter(([k]) => BRAND_INFO.allowedDepartments.includes(k)));

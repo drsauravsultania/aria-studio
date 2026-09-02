@@ -633,6 +633,12 @@ function footer(ctx, slide, surface, type){
 const _measureCtx = document.createElement('canvas').getContext('2d');
 function figHeight(fig){
   if(!fig) return 0;
+  if(fig.type==='contrast'){
+    // Same function the drawer uses. Measuring one way and drawing another is
+    // how tlV and the scale table both broke.
+    const rows = contrastRows(_measureCtx, fig);
+    return rows.reduce((s, r) => s + r.h + 18, 0);
+  }
   if(fig.type==='scale'){
     const bands = fig.bands||[], unit = fig.unit ? 34 : 0;
     if(!bands.length) return 0;
@@ -658,9 +664,47 @@ function figHeight(fig){
 
 function drawFigure(ctx, fig, surface, y, maxY){
   if(!fig) return y;
-  const y1 = fig.type==='scale' ? figScale(ctx, fig, surface, y) : figTimeline(ctx, fig, surface, y, maxY);
-  window.__lastFig = { y0: y, y1 };   // harness reads this to scan only the figure's rows
+  const y1 = fig.type==='scale'  ? figScale(ctx, fig, surface, y)
+           : fig.type==='contrast' ? figContrast(ctx, fig, surface, y, maxY)
+           :                         figTimeline(ctx, fig, surface, y, maxY);
+  window.__lastFig = { y0: y, y1, type: fig.type };   // harness reads this to scan only the figure's rows, and only where columns exist
   return y1;
+}
+
+// Belief against correction: the shape a myth-vs-fact slide actually wants.
+// The engine could only draw scales and timelines, so it reached for stock
+// photography for everything else -- which is why three doctors called the
+// pictures decorative. Geometry lives in contrastRows; draw and figHeight
+// both read it.
+function contrastRows(ctx, fig){
+  const mark = 54, gap = 22, tf = F(42,600), lh = 52;
+  const textW = W - 2*M - mark - gap;
+  ctx.font = tf;
+  return (fig.rows||[]).map(r => {
+    const lines = wrap(ctx, String(r.text||''), tf, textW);
+    return { lines, good: !!r.good, h: Math.max(mark + 12, lines.length*lh + 12) };
+  });
+}
+
+function figContrast(ctx, fig, surface, y, maxY){
+  const rows = contrastRows(ctx, fig);
+  const mark = 54, gap = 22, lh = 52;
+  for(const r of rows){
+    const cx = M + mark/2, cy = y + mark/2;
+    ctx.strokeStyle = r.good ? acc(surface,'correction') : mut(surface);
+    ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(cx, cy, mark/2 - 3, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath();
+    if(r.good){ ctx.moveTo(cx-12, cy+1); ctx.lineTo(cx-3, cy+10); ctx.lineTo(cx+13, cy-10); }
+    else      { ctx.moveTo(cx-9, cy-9); ctx.lineTo(cx+9, cy+9); ctx.moveTo(cx+9, cy-9); ctx.lineTo(cx-9, cy+9); }
+    ctx.stroke();
+    ctx.font = F(42,600);
+    ctx.fillStyle = r.good ? ink(surface) : mut(surface);
+    let ty = y + 4;
+    for(const line of r.lines){ ctx.fillText(line, M + mark + gap, ty); ty += lh; }
+    y += r.h + 18;
+  }
+  return y;
 }
 
 // Two-column scale table with one source of truth for its geometry. Labels

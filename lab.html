@@ -460,6 +460,7 @@ function drawLine(ctx, line, x, y, font, colour, accent){
 
 function block(ctx, lines, x, y, font, lh, colour, accent){
   for(const l of lines){ drawLine(ctx, l, x, y, font, colour, accent); y += lh; }
+  window.__textBottom = Math.max(window.__textBottom || 0, y);
   return y;
 }
 
@@ -613,6 +614,9 @@ function rail(ctx, surface, type, i, n){
 
 function footer(ctx, slide, surface, type){
   let y = H - RAIL - 26;
+  // The harness compares where text ended against where the footer begins.
+  // Counting dark pixels could not tell a full-bleed photo from an overflow.
+  window.__footerTop = y;
   if(slide.source_note){
     ctx.font = F(25,500); ctx.fillStyle = mut(surface); ctx.textBaseline='top';
     y -= 32; ctx.fillText(slide.source_note, M, y);
@@ -874,6 +878,7 @@ function imageBand(ctx, slide){
 }
 
 function renderSlide(slide, i, n){
+  window.__textBottom = 0; window.__footerTop = 0; window.__imageBand = 0;
   const c = document.createElement('canvas'); c.width=W; c.height=H;
   const ctx = c.getContext('2d');
   const type = slide.type;
@@ -897,11 +902,18 @@ function renderSlide(slide, i, n){
     ctx.fillStyle = g; ctx.fillRect(0, H*0.34, W, H*0.66);
   } else {
     band = imageBand(ctx, slide);
+    // A full-bleed photograph legitimately reaches the canvas edge. The margin
+    // test must skip these rows or it reports every photo as an overflow.
+    window.__imageBand = band;
   }
   const hy = header(ctx, surface, i, n, band);
   // red_flags and cta stack source note, legal line and handle in the footer,
   // so they need more clearance than the rest.
-  const extra = type==='red_flags' ? 108 : type==='cta' ? 70 : 0;
+  // Every slide's footer carries a handle; scene and common_practice were
+  // budgeted as if it did not exist, so their text ran into it. Measured:
+  // footer top 1156, old budget 1194 -- 38px inside the footer before a word
+  // was drawn.
+  const extra = type==='red_flags' ? 108 : type==='cta' ? 70 : 60;
   const top = hy+52, bot = H - RAIL - 96 - extra, cw = W - 2*M;
   ctx.textBaseline='top';
 
@@ -919,18 +931,32 @@ function renderSlide(slide, i, n){
   }
   else if(type==='scene' || type==='common_practice'){
     const fig = slide.figure, fh = fig ? figHeight(fig)+52 : 0;
-    let size=92, hl, bl, lh, blh=Math.round(48*1.57);
+    // The old loop shrank only the headline: the body was pinned at 48px with
+    // a 75px line height, so once the headline hit its floor the body drew at
+    // full size regardless of the budget and ran into the footer. Both shrink
+    // now, and if the pair still will not fit the body is trimmed rather than
+    // drawn past the footer.
+    let size=92, bsize=48, hl, bl, lh, blh;
     while(true){
-      lh = Math.round(size*1.30);
+      lh = Math.round(size*1.30); blh = Math.round(bsize*1.57);
       hl = wrap(ctx, slide.headline, F(size,800), cw);
-      bl = slide.body ? wrap(ctx, slide.body, F(48,500), cw) : [];
+      bl = slide.body ? wrap(ctx, slide.body, F(bsize,500), cw) : [];
       const tot = 40 + hl.length*lh + (bl.length?30+bl.length*blh:0) + fh;
-      if(tot <= bot-top || size<=46) break; size-=4;
+      if(tot <= bot-top) break;
+      if(size > 46) size -= 4;
+      else if(bsize > 34) bsize -= 2;
+      else break;
+    }
+    // Floor reached and still over: drop trailing lines rather than overflow.
+    {
+      const avail = bot - top - 40 - hl.length*lh - fh - (bl.length?30:0);
+      const maxLines = Math.max(0, Math.floor(avail / blh));
+      if(bl.length > maxLines) bl = bl.slice(0, maxLines);
     }
     let y = top+6;
     y = eyebrow(ctx, EYE(type), M, y, surface, type);
     y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
-    if(bl.length) y = block(ctx, bl, M, y+30, F(48,500), blh, ink(surface), acc(surface,type));
+    if(bl.length) y = block(ctx, bl, M, y+30, F(bsize,500), blh, ink(surface), acc(surface,type));
     if(fig) drawFigure(ctx, fig, surface, y+52, H - RAIL - 120);
   }
   else if(type==='correction'){

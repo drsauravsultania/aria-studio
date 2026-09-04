@@ -719,14 +719,21 @@ function scaleRows(ctx, bands){
   const valX = M + labelW + gutter, valW = W - M - valX;
   const rows = bands.map(b => {
     const v = String(b.value||'');
+    // Labels wider than the capped column were measured for the cap but drawn
+    // at full width -- straight through the gutter. Wrap them like values.
+    ctx.font = lf;
+    const llines = wrap(ctx, String(b.label||''), lf, labelW);
     ctx.font = vf; const vw = v ? ctx.measureText(v).width : 0;
-    const right = v && (labelW + gutter + vw <= W - 2*M);
+    // Right-aligned values start at (W - M - vw). That left edge must clear the
+    // value column's start, or a long value on a short-labelled row draws back
+    // across the gutter -- which is what "38.0\u00b0C (100.4\u00b0F) or above" did.
+    const right = v && (W - M - vw >= valX);
     const lines = (v && !right) ? wrap(ctx, v, vf, valW) : [];
-    const h = Math.max(66, (right || !v) ? 66 : lines.length*lh + 20);
-    return { b, v, right, lines, h };
+    const h = Math.max(66, Math.max(llines.length, (right || !v) ? 1 : lines.length)*lh + 20);
+    return { b, v, right, lines, llines, h };
   });
   if(rows.some(r => !r.right && r.v)) rows.forEach(r => { if(r.right){ ctx.font = vf;
-    r.right = false; r.lines = wrap(ctx, r.v, vf, valW); r.h = Math.max(66, r.lines.length*lh + 20); } });
+    r.right = false; r.lines = wrap(ctx, r.v, vf, valW); r.h = Math.max(66, Math.max(r.llines.length, r.lines.length)*lh + 20); } });
   return { rows, valX, lf, vf, lh, total: rows.reduce((a,r)=>a+r.h, 0) };
 }
 function scaleTable(ctx, bands, surface, y){
@@ -737,7 +744,7 @@ function scaleTable(ctx, bands, surface, y){
       ctx.beginPath(); ctx.moveTo(M,cy-12); ctx.lineTo(W-M,cy-12); ctx.stroke(); }
     ctx.textBaseline='top';
     ctx.font=lf; ctx.fillStyle = r.b.alert ? P.alert : ink(surface);
-    ctx.fillText(r.b.label||'', M, cy);
+    r.llines.forEach((ln, k) => ctx.fillText(ln, M, cy + k*lh));
     const vc = r.b.alert ? P.alert : acc(surface,'');
     if(r.right){ ctx.font=vf; ctx.fillStyle=vc; ctx.fillText(r.v, W-M-ctx.measureText(r.v).width, cy+2); }
     else r.lines.forEach((ln,j) => drawLine(ctx, ln, valX, cy+2+j*lh, vf, vc, vc));

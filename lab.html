@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-4</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-5</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1518,6 +1518,19 @@ document.addEventListener('keydown', e => {
 $('#gen').onclick = () => {
   const topic = $('#topic').value.trim();
   if(!topic){ $('#topic').focus(); return; }
+  // The finished carousel stayed on screen while the next one was being
+  // written, with Save and Share still live on it. Clear it here rather than
+  // reloading the page, which would throw away the topic just typed.
+  DOC = null; saved.clear(); imgURL = {};
+  localStorage.removeItem(LS_DOC);
+  // Clearing the slides alone leaves the previous carousel's caption, sources
+  // and cautions on screen for the two minutes the next one takes to write.
+  for(const id of ['#out', '#srclist']) { const el = $(id); if(el) el.innerHTML = ''; }
+  { const el = $('#capbox'); if(el) el.textContent = ''; }
+  { const el = $('#meta');   if(el) el.textContent = ''; }
+  { const el = $('#review'); if(el){ el.innerHTML = ''; show(el, false); } }
+  { const el = $('#diverge'); if(el) show(el, false); }
+  { const fl = $('#freshline'); if(fl) show(fl, false); }
   startJob('/carousel', { topic, department: $('#dept').value, brand: BRAND_KEY });
 };
 

@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-3</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-4</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1265,7 +1265,11 @@ async function makeImage(i, btn){
     const r2 = await fetch(IMG_API + '/generate', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind, subject }),
+      // The style contract varies camera height by department and framing by
+      // slide type. Without these it falls back to one locked composition and
+      // every carousel looks like the last one.
+      body: JSON.stringify({ kind, subject, slideType: s.type,
+        department: (DOC && DOC._meta && DOC._meta.department) || '' }),
     });
     const out2 = await r2.json();
     if(!r2.ok || !out2.url) throw new Error(out2.error || 'Could not make the picture.');

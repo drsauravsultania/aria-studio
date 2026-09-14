@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260904-40</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-1</span>
 </div>
 
 <div class="dock" id="dock">
@@ -393,10 +393,10 @@ const SURFACE = {hook:'light', scene:'dark', common_practice:'light',
   correction:'grad', steps:'light', red_flags:'alertbg', cta:'grad'};
 
 let logo = null;
-const tryLogo = () => new Promise(res => {
+const tryLogo = (src) => new Promise(res => {
   const i = new Image(); i.crossOrigin = 'anonymous';
   i.onload = () => res(i); i.onerror = () => res(null);
-  i.src = (BRAND_KEY === 'aria') ? 'https://ariahealthcare.in/img/logo.png' : '';
+  i.src = src || '';
 });
 
 const ink = s => s==='light'?P.ink : s==='dark'?P.darkInk : s==='alertbg'?P.alertInk : s==='photo'?'#F6F3EC' : P.gradInk;
@@ -1313,7 +1313,7 @@ async function build(raw){
 
   try{ await document.fonts.load('800 100px Mukta');
        await document.fonts.load('500 48px Mukta'); }catch(_){}
-  if(logo === null) logo = window.__noLogo ? null : await tryLogo();
+  if(logo === null) logo = window.__noLogo ? null : await tryLogo(BRAND.logoUrl);
 
   const m = $('#meta');
   if(m) m.textContent = doc._meta
@@ -1619,6 +1619,7 @@ const paintChrome = () => {
             _c = _c.split('\u00b7').slice(1).join('\u00b7').trim();
           BRAND.credential = _c;
           BRAND.avatarUrl = BRAND_INFO.avatarUrl || '';
+          BRAND.logoUrl  = BRAND_INFO.logoUrl  || '';
           if(BRAND_INFO.primary){ Object.assign(P, derivePalette(BRAND_INFO.primary, BRAND_INFO.secondary));
             const rs = document.documentElement.style, rgb = h => { const n=parseInt(h.slice(1),16); return `${n>>16&255},${n>>8&255},${n&255}`; };
             rs.setProperty('--brand', P.brand); rs.setProperty('--ok', P.mid); rs.setProperty('--accent', P.mid);
@@ -1626,7 +1627,9 @@ const paintChrome = () => {
             { const [gh, gs] = _h2hsl(P.brand); rs.setProperty('--ground', _hsl2h(gh, Math.min(gs*0.12, 10), 98)); } }
           BRAND.tagline = '';
           BRAND.mark = (BRAND_INFO.name || 'D').replace(/^Dr\.?\s*/i,'')[0] || 'D';
-          window.__noLogo = true; logo = null;
+          // A personal brand keeps the letter badge unless it has its own
+          // square logo. Doctors without one are unchanged.
+          window.__noLogo = !BRAND.logoUrl; logo = null;
         } else if(BRAND_INFO.name){
           BRAND.name = BRAND_INFO.name;
           BRAND.credential = BRAND_INFO.credential || BRAND.credential;

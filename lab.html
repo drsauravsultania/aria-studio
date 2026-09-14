@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-5</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-6</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1531,6 +1531,9 @@ $('#gen').onclick = () => {
   { const el = $('#review'); if(el){ el.innerHTML = ''; show(el, false); } }
   { const el = $('#diverge'); if(el) show(el, false); }
   { const fl = $('#freshline'); if(fl) show(fl, false); }
+  // build() resets the gate when the new deck lands, but until then it holds
+  // the previous carousel's tick, leaving Save and Share live over nothing.
+  { const g = $('#gate'); if(g){ g.checked = false; gate(); } }
   startJob('/carousel', { topic, department: $('#dept').value, brand: BRAND_KEY });
 };
 

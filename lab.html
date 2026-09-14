@@ -298,7 +298,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 
   <div id="out" class="locked"></div>
 
-  <div class="card">
+  <div class="card" id="postbox">
     <p class="eyebrow"><i>4</i> Post it</p>
     <h3>Caption</h3>
     <pre class="cap" id="capbox"></pre>
@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-6</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-7</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1357,6 +1357,7 @@ async function build(raw){
     });
     show($('#srcbox'),true);
   } else show($('#srcbox'),false);
+  for(const id of ['#gatebox', '#postbox']) { const el = $(id); if(el) show(el, true); }
 
   if(doc.guideline_conflict){
     $('#diverge').innerHTML = '<b>Where guidance disagrees</b>' + esc(doc.guideline_conflict);
@@ -1534,6 +1535,7 @@ $('#gen').onclick = () => {
   // build() resets the gate when the new deck lands, but until then it holds
   // the previous carousel's tick, leaving Save and Share live over nothing.
   { const g = $('#gate'); if(g){ g.checked = false; gate(); } }
+  for(const id of ['#srcbox', '#gatebox', '#postbox']) { const el = $(id); if(el) show(el, false); }
   startJob('/carousel', { topic, department: $('#dept').value, brand: BRAND_KEY });
 };
 

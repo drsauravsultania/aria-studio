@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-1</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-2</span>
 </div>
 
 <div class="dock" id="dock">
@@ -384,7 +384,9 @@ const BRAND = {
 const LEGAL = () => 'Educational content. Not a substitute for examination by your doctor. ' + BRAND.reg;
 
 const EYE = t => t !== 'hook' ? EYEBROW[t]
-  : (/p(a)?ediatric|neonat/i.test((DOC && DOC._meta && DOC._meta.department) || 'Paediatrics')
+  // The old default was 'Paediatrics', which matches this regex -- so any
+  // hook drawn before DOC was assigned said PARENT regardless of department.
+  : (/p(a)?ediatric|neonat/i.test((DOC && DOC._meta && DOC._meta.department) || '')
      ? 'PARENT EDUCATION' : 'PATIENT EDUCATION');
 const EYEBROW = {hook:'PARENT EDUCATION', scene:'THE SITUATION',
   common_practice:'COMMON PRACTICE', correction:'THE EVIDENCE',

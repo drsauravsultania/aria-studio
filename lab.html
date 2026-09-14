@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-2</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-3</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1157,6 +1157,9 @@ const IMG_API = 'https://img.ariahealthcare.in';
 const BRAND_KEY = new URLSearchParams(location.search).get('brand') || 'aria';
 let BRAND_INFO = null;
 let DOC = null, saved = new Set(), imgURL = {};
+// localStorage is per-origin and every brand shares this one. Without the
+// brand in the key, one doctor's draft restores inside another's studio.
+const LS_DOC = 'aria_doc:' + BRAND_KEY, LS_JOB = 'aria_job:' + BRAND_KEY;
 
 // Any generator, any device. She makes a picture wherever she likes — Gemini on
 // her phone, or a photo she took herself — and drops it straight in. No URL, no
@@ -1437,7 +1440,7 @@ function jobUI(on, label){
 async function runTicketed(path, body){
   const ticket = body.ticket || (crypto.randomUUID().replace(/-/g,'').slice(0,20));
   body.ticket = ticket;
-  localStorage.setItem('aria_job', JSON.stringify({ path, body, t: Date.now() }));
+  localStorage.setItem(LS_JOB, JSON.stringify({ path, body, t: Date.now() }));
   jobUI(true);
   // A silent long wait is indistinguishable from a hang. Count the seconds on
   // the button, and cut the cord at three minutes rather than forever.
@@ -1468,9 +1471,9 @@ async function runTicketed(path, body){
     catch(_){ out = { error: 'The writer sent an unreadable answer.' }; }
     if(!r.ok || !out.doc) throw new Error(out.error || 'The writer did not answer.');
     clearInterval(tick); clearTimeout(cut);
-    localStorage.removeItem('aria_job');
+    localStorage.removeItem(LS_JOB);
     show($('#generr'), false);
-    try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
+    try{ localStorage.setItem(LS_DOC, JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
     jobUI(false);
     await build(JSON.stringify(out.doc));
   }catch(e){
@@ -1480,7 +1483,7 @@ async function runTicketed(path, body){
     // so the ticket is kept and polled on the next load. Only a real answer
     // from the writer tears it up.
     const dropped = e.name === 'AbortError' || /fetch|network|load failed/i.test(e.message || '');
-    if(!dropped) localStorage.removeItem('aria_job');
+    if(!dropped) localStorage.removeItem(LS_JOB);
     jobUI(false);
     $('#generr').textContent = (e.name === 'AbortError'
       ? 'The writer took over three minutes and was cut off.'
@@ -1495,7 +1498,7 @@ async function startJob(path, body){ return runTicketed(path, body); }
 // that does not depend on knowing what a hard refresh is.
 document.addEventListener('click', e => {
   if(!e.target || e.target.id !== 'fresh') return;
-  localStorage.removeItem('aria_doc'); localStorage.removeItem('aria_job');
+  localStorage.removeItem(LS_DOC); localStorage.removeItem(LS_JOB);
   location.href = location.pathname + location.search;
 });
 
@@ -1677,14 +1680,14 @@ const paintChrome = () => {
 (async function resume(){
   // First: a carousel finished earlier is still hers. Show it.
   try{
-    const d = JSON.parse(localStorage.getItem('aria_doc') || 'null');
+    const d = JSON.parse(localStorage.getItem(LS_DOC) || 'null');
     if(d && d.doc && Date.now() - (d.t||0) < 24*3600*1000){ await build(JSON.stringify(d.doc)); return; }
   }catch(_){}
   // Otherwise: an unfinished job is asked about, never restarted.
   let j = null;
-  try{ j = JSON.parse(localStorage.getItem('aria_job') || 'null'); }catch(_){}
+  try{ j = JSON.parse(localStorage.getItem(LS_JOB) || 'null'); }catch(_){}
   if(!(j && j.body && j.body.ticket && Date.now() - (j.t||0) < 15*60*1000)){
-    localStorage.removeItem('aria_job'); return; }
+    localStorage.removeItem(LS_JOB); return; }
   jobUI(true, 'Checking your carousel\u2026');
   PREV.t0 = j.t; PREV.topic = (j.body.topic || '').trim();
   try{ drawPreview(); }catch(_){}
@@ -1693,15 +1696,15 @@ const paintChrome = () => {
     let out = null;
     try{ const r = await fetch(IMG_API + '/job/' + j.body.ticket); out = await r.json(); }catch(_){}
     if(out && out.status === 'done' && out.doc){
-      localStorage.removeItem('aria_job');
-      try{ localStorage.setItem('aria_doc', JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
+      localStorage.removeItem(LS_JOB);
+      try{ localStorage.setItem(LS_DOC, JSON.stringify({ doc: out.doc, t: Date.now() })); }catch(_){}
       jobUI(false); PREV.t0 = 0; show($('#generr'), false); await build(JSON.stringify(out.doc)); return;
     }
     if(out && out.error){ break; }
     try{ drawPreview(); }catch(_){}
     await new Promise(r => setTimeout(r, 3000));
   }
-  localStorage.removeItem('aria_job'); jobUI(false); PREV.t0 = 0;
+  localStorage.removeItem(LS_JOB); jobUI(false); PREV.t0 = 0;
   try{ drawPreview(); }catch(_){}
   $('#generr').textContent = 'That carousel did not finish. Tap Make the carousel to try again.';
   show($('#generr'), true);

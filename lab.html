@@ -310,7 +310,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-7</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-8</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1703,7 +1703,12 @@ const paintChrome = () => {
   // First: a carousel finished earlier is still hers. Show it.
   try{
     const d = JSON.parse(localStorage.getItem(LS_DOC) || 'null');
-    if(d && d.doc && Date.now() - (d.t||0) < 24*3600*1000){ await build(JSON.stringify(d.doc)); return; }
+    // A doc stored without a slides array cannot be rebuilt, and replaying it
+    // showed "There are no slides in that" on every load with no way out.
+    // The Worker now normalises this, but entries written before that fix are
+    // already sitting in browsers. Discard rather than replay.
+    if(d && d.doc && !Array.isArray(d.doc.slides)){ localStorage.removeItem(LS_DOC); }
+    else if(d && d.doc && Date.now() - (d.t||0) < 24*3600*1000){ await build(JSON.stringify(d.doc)); return; }
   }catch(_){}
   // Otherwise: an unfinished job is asked about, never restarted.
   let j = null;

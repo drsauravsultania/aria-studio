@@ -220,8 +220,12 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 .secondline button.link{ display:inline !important; width:auto !important;
   min-width:0 !important; margin:0 !important; padding:0 !important;
   text-align:left !important; line-height:inherit !important; }
-.secondline{ text-align:left !important; display:flex !important; flex-wrap:nowrap !important; }
-.secondline button.link{ display:inline-block !important; white-space:nowrap !important; }
+/* This said display:flex with flex-wrap:nowrap, which contradicts the comment
+   above: five inline items in a row that cannot wrap have nowhere to go in a
+   narrow container, so they overlapped. It is a sentence -- let it wrap like
+   one. Each link still keeps its own words together. */
+.secondline{ text-align:left !important; }
+.secondline button.link{ display:inline !important; white-space:nowrap !important; }
 #review h4{ margin:0 0 8px; }
 #review .dept{ margin:0 0 10px; font-size:14.5px; }
 #review ul{ margin:0; padding-left:18px; }
@@ -310,7 +314,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-8</span>
+  <br><span style="opacity:.55">Aria Lab v20260914-9</span>
 </div>
 
 <div class="dock" id="dock">

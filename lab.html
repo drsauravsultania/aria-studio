@@ -314,7 +314,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260914-9</span>
+  <br><span style="opacity:.55">Aria Lab v20260916-1</span>
 </div>
 
 <div class="dock" id="dock">
@@ -674,6 +674,11 @@ function drawFigure(ctx, fig, surface, y, maxY){
            : fig.type==='contrast' ? figContrast(ctx, fig, surface, y, maxY)
            :                         figTimeline(ctx, fig, surface, y, maxY);
   window.__lastFig = { y0: y, y1, type: fig.type };   // harness reads this to scan only the figure's rows, and only where columns exist
+  // Only block() raised __textBottom, and block() draws text. A figure drawn
+  // below the text left __textBottom at the text's end, so the clearance test
+  // reported a slide clear while the figure ran through the source line and
+  // the handle. The figure's bottom edge was already known here.
+  window.__textBottom = Math.max(window.__textBottom || 0, y1);
   return y1;
 }
 
@@ -1273,7 +1278,11 @@ async function makeImage(i, btn){
       // slide type. Without these it falls back to one locked composition and
       // every carousel looks like the last one.
       body: JSON.stringify({ kind, subject, slideType: s.type,
-        department: (DOC && DOC._meta && DOC._meta.department) || '' }),
+        department: (DOC && DOC._meta && DOC._meta.department) || '',
+        // Framing keyed on slide type alone gave every carousel the same seven
+        // treatments in the same order. The topic varies them between decks
+        // while keeping one deck reproducible.
+        topic: (DOC && DOC.topic) || '' }),
     });
     const out2 = await r2.json();
     if(!r2.ok || !out2.url) throw new Error(out2.error || 'Could not make the picture.');

@@ -314,7 +314,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260916-1</span>
+  <br><span style="opacity:.55">Aria Lab v20260916-2</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1199,13 +1199,30 @@ async function autoFill(){
     const btn = card && card.querySelector('.genimg');
     if(btn){ btn.textContent = 'Making the picture…'; btn.disabled = true; }
     try{
-      const r = await fetch(IMG_API + '/generate', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ kind: s.image.kind || 'photo',
-                               subject: s.image.subject }),
-      });
-      const out = await r.json();
+      // Cloudflare places each Worker invocation in whichever data centre it
+      // likes and Google refuses some of them ("User location is not supported
+      // for the API use" — HKG is one), so about a third of pictures failed at
+      // random. Retrying inside the Worker cannot help: the placement is fixed
+      // for that invocation. Each fetch from here gets a new one.
+      // This path also sent only kind and subject, so every automatically
+      // generated picture got the fallback framing rather than the varied
+      // framing — which is most pictures.
+      let r = null, out = null;
+      for(let attempt = 0; attempt < 4; attempt++){
+        if(attempt) await new Promise(res => setTimeout(res, 300));
+        r = await fetch(IMG_API + '/generate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: s.image.kind || 'photo',
+                                 subject: s.image.subject,
+                                 slideType: s.type,
+                                 department: (DOC && DOC._meta && DOC._meta.department) || '',
+                                 topic: (DOC && DOC.topic) || '' }),
+        });
+        out = await r.json();
+        if(r.ok && out.url) break;
+        if(!/location is not supported/i.test(out.error || '')) break;
+      }
       if(r.ok && out.url){
         await loadImg(out.url);
         s.image.url = out.url;
@@ -1271,20 +1288,27 @@ async function makeImage(i, btn){
       }
     }
 
-    const r2 = await fetch(IMG_API + '/generate', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      // The style contract varies camera height by department and framing by
-      // slide type. Without these it falls back to one locked composition and
-      // every carousel looks like the last one.
-      body: JSON.stringify({ kind, subject, slideType: s.type,
-        department: (DOC && DOC._meta && DOC._meta.department) || '',
-        // Framing keyed on slide type alone gave every carousel the same seven
-        // treatments in the same order. The topic varies them between decks
-        // while keeping one deck reproducible.
-        topic: (DOC && DOC.topic) || '' }),
-    });
-    const out2 = await r2.json();
+    // Same placement retry as the automatic path above.
+    let r2 = null, out2 = null;
+    for(let attempt = 0; attempt < 4; attempt++){
+      if(attempt) await new Promise(res => setTimeout(res, 300));
+      r2 = await fetch(IMG_API + '/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        // The style contract varies camera height by department and framing by
+        // slide type. Without these it falls back to one locked composition and
+        // every carousel looks like the last one.
+        body: JSON.stringify({ kind, subject, slideType: s.type,
+          department: (DOC && DOC._meta && DOC._meta.department) || '',
+          // Framing keyed on slide type alone gave every carousel the same seven
+          // treatments in the same order. The topic varies them between decks
+          // while keeping one deck reproducible.
+          topic: (DOC && DOC.topic) || '' }),
+      });
+      out2 = await r2.json();
+      if(r2.ok && out2.url) break;
+      if(!/location is not supported/i.test(out2.error || '')) break;
+    }
     if(!r2.ok || !out2.url) throw new Error(out2.error || 'Could not make the picture.');
     await loadImg(out2.url);
     s.image = { kind, url: out2.url, subject };

@@ -314,7 +314,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260916-3</span>
+  <br><span style="opacity:.55">Aria Lab v20260916-4</span>
 </div>
 
 <div class="dock" id="dock">
@@ -1309,6 +1309,9 @@ async function makeImage(i, btn){
           body: JSON.stringify({
             topic: DOC.topic || '',
             slide: { type: s.type, headline: s.headline || '', body: s.body || '' },
+            // Without this the Worker assumed a paediatric audience and
+            // suggested toddlers and toys for every department.
+            department: (DOC && DOC._meta && DOC._meta.department) || '',
           }),
         });
         const out = await r.json();

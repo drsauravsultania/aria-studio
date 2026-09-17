@@ -314,7 +314,7 @@ button.link.dim{ font-weight:500; color:var(--mut); }
 <div class="foot">
   <span id="footabout"></span>
   <span id="footident"></span>
-  <br><span style="opacity:.55">Aria Lab v20260916-2</span>
+  <br><span style="opacity:.55">Aria Lab v20260916-3</span>
 </div>
 
 <div class="dock" id="dock">
@@ -622,7 +622,11 @@ function footer(ctx, slide, surface, type){
   let y = H - RAIL - 26;
   // The harness compares where text ended against where the footer begins.
   // Counting dark pixels could not tell a full-bleed photo from an overflow.
-  window.__footerTop = y;
+  // This recorded 1156 before the block was drawn -- but the footer grows
+  // UPWARD from here: a source note takes 32px and a legal line another 68,
+  // so the real top is 1124 or ~1056. Every clearance number was measured
+  // against a line up to 100px below where the footer actually starts, which
+  // is why figures kept drawing through it while the test reported clear.
   if(slide.source_note){
     ctx.font = F(25,500); ctx.fillStyle = mut(surface); ctx.textBaseline='top';
     y -= 32; ctx.fillText(slide.source_note, M, y);
@@ -633,9 +637,24 @@ function footer(ctx, slide, surface, type){
     y -= 8 + ls.length*30;
     let yy = y; for(const l of ls){ ctx.fillText(l, M, yy); yy += 30; }
   }
+  window.__footerTop = y;
 }
 
 /* ---- figures -------------------------------------------------------- */
+// The figure budget was the constant H-RAIL-120 = 1062, which tracks nothing:
+// the footer starts at 1156 on a plain slide, 1124 with a source note and as
+// little as 1086 once a legal block is added. Compute the same growth footer()
+// applies, so the figure is fitted against the line it must not cross.
+function footerTopFor(ctx, slide, type){
+  let y = H - RAIL - 26;
+  if(slide && slide.source_note) y -= 32;
+  if(type === 'red_flags' || type === 'cta'){
+    const ls = wrap(ctx, LEGAL(), F(23,400), W-2*M);
+    y -= 8 + ls.length*30;
+  }
+  return y;
+}
+
 const _measureCtx = document.createElement('canvas').getContext('2d');
 function figHeight(fig){
   if(!fig) return 0;
@@ -699,21 +718,30 @@ function contrastRows(ctx, fig){
 
 function figContrast(ctx, fig, surface, y, maxY){
   const rows = contrastRows(ctx, fig);
-  const mark = 54, gap = 22, lh = 52;
+  // maxY was accepted here and never read: every row drew at full size however
+  // little room was left, so a long correction headline pushed the last rows
+  // through the source line, the handle and the swoosh. tlV already solves
+  // this for timelines by scaling down until it fits; do the same.
+  let k = 1;
+  if(maxY){
+    const total = () => rows.reduce((t, r) => t + r.h*k + 18*k, 0);
+    while(k > 0.68 && y + total() > maxY) k -= 0.08;
+  }
+  const mark = 54*k, gap = 22*k, lh = 52*k;
   for(const r of rows){
     const cx = M + mark/2, cy = y + mark/2;
     ctx.strokeStyle = r.good ? acc(surface,'correction') : mut(surface);
-    ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.lineWidth = 6*k; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.arc(cx, cy, mark/2 - 3, 0, Math.PI*2); ctx.stroke();
     ctx.beginPath();
     if(r.good){ ctx.moveTo(cx-12, cy+1); ctx.lineTo(cx-3, cy+10); ctx.lineTo(cx+13, cy-10); }
     else      { ctx.moveTo(cx-9, cy-9); ctx.lineTo(cx+9, cy+9); ctx.moveTo(cx+9, cy-9); ctx.lineTo(cx-9, cy+9); }
     ctx.stroke();
-    ctx.font = F(42,600);
+    ctx.font = F(Math.round(42*k),600);
     ctx.fillStyle = r.good ? ink(surface) : mut(surface);
     let ty = y + 4;
     for(const line of r.lines){ ctx.fillText(line, M + mark + gap, ty); ty += lh; }
-    y += r.h + 18;
+    y += r.h*k + 18*k;
   }
   return y;
 }
@@ -1019,7 +1047,7 @@ function renderSlide(slide, i, n){
     y = eyebrow(ctx, EYE(type), M, y, surface, type);
     y = block(ctx, hl, M, y, F(size,800), lh, ink(surface), acc(surface,type));
     if(bl.length) y = block(ctx, bl, M, y+30, F(bsize,500), blh, ink(surface), acc(surface,type));
-    if(fig) drawFigure(ctx, fig, surface, y+52, H - RAIL - 120);
+    if(fig) drawFigure(ctx, fig, surface, y+52, footerTopFor(ctx, slide, type) - 24);
   }
   else if(type==='correction'){
     const fig = slide.figure;
@@ -1028,18 +1056,25 @@ function renderSlide(slide, i, n){
     // is left, so the emptiness is margin rather than a hole.
     const cap = fig ? 0.44 : 0.94;
     const maxSize = fig ? 104 : 132;
-    let size = maxSize, lines, lh;
+    // The headline shrank to satisfy its own 44% cap and stopped, without ever
+    // asking whether the figure still fitted underneath. figH was computed
+    // after the fact and used only for centring. The figure then scaled to its
+    // 0.68 floor and drew through the footer regardless. scene/common_practice
+    // already fits the pair together; do the same here.
+    const budget = footerTopFor(ctx, slide, type) - 24 - top;
+    let size = maxSize, lines, lh, figH = fig ? figHeight(fig) + 50 : 0;
     do { lh = Math.round(size*1.26);
          lines = wrap(ctx, slide.headline, F(size,800), cw);
-         if(lines.length*lh <= (bot-top)*cap) break; size -= 5; }
+         if(lines.length*lh <= (bot-top)*cap
+            && _eyebrowH() + lines.length*lh + figH <= budget) break;
+         size -= 5; }
     while(size > 46);
 
-    const figH = fig ? figHeight(fig) + 50 : 0;
     const totalH = _eyebrowH() + lines.length*lh + figH;
     let y = top + (fig ? 6 : Math.max(6, (bot - top - totalH) / 2));
     y = eyebrow(ctx, EYEBROW.correction, M, y, surface, type);
     y = block(ctx, lines, M, y, F(size,800), lh, P.gradInk, P.mid);
-    if(fig) drawFigure(ctx, fig, surface, y + 50, H - RAIL - 120);
+    if(fig) drawFigure(ctx, fig, surface, y + 50, footerTopFor(ctx, slide, type) - 24);
   }
   else if(type==='steps'){
     // The third disease of the day: this branch drew without measuring, so a
